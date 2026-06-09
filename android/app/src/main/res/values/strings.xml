@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">EcoFinApp</string>
+    <string name="title_activity_main">EcoFinApp</string>
+    <string name="package_name">com.ecofinapp.app</string>
+    <string name="custom_url_scheme">com.ecofinapp.app</string>
+</resources>
