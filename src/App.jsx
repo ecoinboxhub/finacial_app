@@ -116,6 +116,12 @@ function App() {
 
   return (
     <div className="app-container">
+      {/* Background Blobs for Glassmorphism glow */}
+      <div className="bg-blob-container">
+        <div className="bg-blob blob-1"></div>
+        <div className="bg-blob blob-2"></div>
+        <div className="bg-blob blob-3"></div>
+      </div>
       
       {/* Sidebar Navigation (Desktop) */}
       <aside className="sidebar">
