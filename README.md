@@ -13,7 +13,8 @@ EcoFinApp is a modern, responsive, and AI-powered web application designed to te
   - **Financial Education (6)**: Budgeting, Savings, Banking (+Mobile Money/M-Pesa), Credit & Debt, Mortgages, Retirement & Pension (RSA/NSSF).
   - **Investment Modules (13)**: Mutual Funds, Bonds, Stocks, T-Bills, Commercial Paper, Forex, Crypto, Real Estate, Agriculture, Transportation, Oil & Gas, Referrals, Local Arbitrage — all with African market context.
   - **Platform Directory**: NGX, NSE, GSE, PiggyVest, Chipper Cash, M-KOPA, Fidelity, Vanguard, Coinbase.
-- 🧮 **5 Interactive Calculators**: Mortgage, Investment Growth, Compound Interest, Simple Interest, Savings Goal.
+- 🧮 **6 Interactive Calculators**: Mortgage, Investment Growth, Compound Interest, Simple Interest, Savings Goal + **Basic Arithmetic Calculator** (add, subtract, multiply, divide, √, %, π, memory, history).
+- 🖊️ **Dual Input Controls**: Every calculator field has both a **slider** and a **typeable number input** — drag or type exact values.
 - 🤖 **AI Financial Coach**: Chat-based assistant with offline fallback + optional Gemini API integration.
 - 💬 **Community Q&A Forum**: Create posts, like discussions, and comment — persisted to LocalStorage.
 - 💱 **Multi-Currency Support**: USD, NGN (Naira), KES (Shilling), GHS (Cedi), ZAR (Rand), EGP (Pound), GBP, EUR — switch anytime from the header.
