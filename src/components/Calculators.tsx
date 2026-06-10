@@ -2,60 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { useToast } from './ToastContext';
 import { useCurrency } from './CurrencyContext';
 import BasicCalculator from './BasicCalculator';
+import DigitalNumpad from './DigitalNumpad';
 import type { User, CalculatorInputs, CalculatorResults } from '../types';
 
 interface CalculatorsProps {
   user: User | null;
 }
 
-function DualInput({ label, value, onChange, min, max, step, formatDisplay, slider = true }: {
-  label: string;
-  value: number;
-  onChange: (v: number) => void;
-  min?: number;
-  max?: number;
-  step?: number;
-  formatDisplay?: (v: number) => string;
-  slider?: boolean;
-}) {
-  const handleSlider = (e: React.ChangeEvent<HTMLInputElement>) => onChange(parseFloat(e.target.value) || 0);
-  const handleNumber = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const v = e.target.value === '' ? '' : parseFloat(e.target.value);
-    if (v === '' || (!isNaN(v) && v >= (min ?? -Infinity) && v <= (max ?? Infinity))) {
-      onChange(v === '' ? 0 : v);
-    }
-  };
-
-  return (
-    <div className="dual-input-group">
-      <div className="input-label-row">
-        <span>{label}</span>
-        <span className="input-val-display">
-          {formatDisplay ? formatDisplay(value) : value}
-        </span>
-      </div>
-      <div className="dual-input-row">
-        {slider !== false && (
-          <input
-            type="range" min={min ?? 0} max={max ?? 1000000} step={step ?? 1}
-            value={typeof value === 'number' ? value : 0}
-            className="slider-input"
-            onChange={handleSlider}
-          />
-        )}
-        <input
-          type="number"
-          className="number-input-field dual-number-input"
-          value={value}
-          onChange={handleNumber}
-          min={min}
-          max={max}
-          step={step ?? 1}
-        />
-      </div>
-    </div>
-  );
-}
+const calcCards = [
+  { id: 'mortgage', icon: '🏡', label: 'Mortgage' },
+  { id: 'investment', icon: '📈', label: 'Investment' },
+  { id: 'compound', icon: '🔄', label: 'Compound' },
+  { id: 'simple', icon: '➖', label: 'Simple' },
+  { id: 'savings', icon: '🎯', label: 'Savings' },
+  { id: 'basic', icon: '🔢', label: 'Basic Calc' },
+] as const;
 
 export default function Calculators({ user }: CalculatorsProps) {
   const addToast = useToast();
@@ -194,29 +155,19 @@ export default function Calculators({ user }: CalculatorsProps) {
 
   const handleCalcSwitch = (calc: string) => {
     setActiveCalc(calc);
-    const names: Record<string, string> = { mortgage: 'Mortgage', investment: 'Investment Growth', compound: 'Compound Interest', simple: 'Simple Interest', savings: 'Savings Goal', basic: 'Basic Calculator' };
-    addToast(`Switched to ${names[calc] || calc}`, 'info', 2000);
   };
-
-  const calcTabs = [
-    { id: 'mortgage', label: '🏡 Mortgage' },
-    { id: 'investment', label: '📈 Investment' },
-    { id: 'compound', label: '🔄 Compound' },
-    { id: 'simple', label: '➖ Simple' },
-    { id: 'savings', label: '🎯 Savings' },
-    { id: 'basic', label: '🔢 Basic Calc' },
-  ];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      <div className="module-tabs">
-        {calcTabs.map(calc => (
+      <div className="calc-selector-grid">
+        {calcCards.map(card => (
           <button
-            key={calc.id}
-            className={`module-tab-btn btn-press ${activeCalc === calc.id ? 'active' : ''}`}
-            onClick={() => handleCalcSwitch(calc.id)}
+            key={card.id}
+            className={`calc-selector-card ${activeCalc === card.id ? 'active' : ''}`}
+            onClick={() => handleCalcSwitch(card.id)}
           >
-            {calc.label}
+            <span className="calc-selector-icon">{card.icon}</span>
+            <span className="calc-selector-label">{card.label}</span>
           </button>
         ))}
       </div>
@@ -230,11 +181,11 @@ export default function Calculators({ user }: CalculatorsProps) {
               {activeCalc === 'mortgage' && (
                 <>
                   <h3 className="calc-section-title">🏡 Home Loan Details</h3>
-                  <DualInput label="Home Purchase Price" value={inputs.homePrice} min={50000} max={20000000} step={10000}
+                  <DigitalNumpad label="Home Purchase Price" value={inputs.homePrice} min={50000} max={20000000} step={10000}
                     onChange={v => handleInputChange('homePrice', v)} formatDisplay={v => formatAmount(v)} />
-                  <DualInput label="Down Payment" value={inputs.downPayment} min={0} max={inputs.homePrice} step={5000}
+                  <DigitalNumpad label="Down Payment" value={inputs.downPayment} min={0} max={inputs.homePrice} step={5000}
                     onChange={v => handleInputChange('downPayment', v)} formatDisplay={v => formatAmount(v)} />
-                  <DualInput label="Interest Rate (Annual %)" value={inputs.interestRate} min={0.1} max={30} step={0.1}
+                  <DigitalNumpad label="Interest Rate (Annual %)" value={inputs.interestRate} min={0.1} max={30} step={0.1}
                     onChange={v => handleInputChange('interestRate', v)} formatDisplay={v => `${v}%`} />
                   <div className="input-group">
                     <label className="input-label-row">Loan Term (Years)</label>
@@ -255,13 +206,13 @@ export default function Calculators({ user }: CalculatorsProps) {
               {activeCalc === 'investment' && (
                 <>
                   <h3 className="calc-section-title">📈 Investment Growth Settings</h3>
-                  <DualInput label="Starting Lump Sum" value={inputs.principal} min={0} max={10000000} step={1000}
+                  <DigitalNumpad label="Starting Lump Sum" value={inputs.principal} min={0} max={10000000} step={1000}
                     onChange={v => handleInputChange('principal', v)} formatDisplay={v => formatAmount(v)} />
-                  <DualInput label="Monthly Contribution" value={inputs.monthlyContribution} min={0} max={100000} step={50}
+                  <DigitalNumpad label="Monthly Contribution" value={inputs.monthlyContribution} min={0} max={100000} step={50}
                     onChange={v => handleInputChange('monthlyContribution', v)} formatDisplay={v => `${formatAmount(v)}/mo`} />
-                  <DualInput label="Annual Return (%)" value={inputs.annualReturn} min={0.1} max={50} step={0.5}
+                  <DigitalNumpad label="Annual Return (%)" value={inputs.annualReturn} min={0.1} max={50} step={0.5}
                     onChange={v => handleInputChange('annualReturn', v)} formatDisplay={v => `${v}%`} />
-                  <DualInput label="Time Horizon (Years)" value={inputs.years} min={1} max={80} step={1}
+                  <DigitalNumpad label="Time Horizon (Years)" value={inputs.years} min={1} max={80} step={1}
                     onChange={v => handleInputChange('years', v)} formatDisplay={v => `${v} Years`} />
                 </>
               )}
@@ -269,11 +220,11 @@ export default function Calculators({ user }: CalculatorsProps) {
               {activeCalc === 'compound' && (
                 <>
                   <h3 className="calc-section-title">🔄 Compounding (Lump Sum)</h3>
-                  <DualInput label="Lump Sum Principal" value={inputs.principal} min={100} max={10000000} step={500}
+                  <DigitalNumpad label="Lump Sum Principal" value={inputs.principal} min={100} max={10000000} step={500}
                     onChange={v => handleInputChange('principal', v)} formatDisplay={v => formatAmount(v)} />
-                  <DualInput label="Annual Interest Rate (%)" value={inputs.annualReturn} min={0.1} max={50} step={0.1}
+                  <DigitalNumpad label="Annual Interest Rate (%)" value={inputs.annualReturn} min={0.1} max={50} step={0.1}
                     onChange={v => handleInputChange('annualReturn', v)} formatDisplay={v => `${v}%`} />
-                  <DualInput label="Investment Term (Years)" value={inputs.years} min={1} max={100} step={1}
+                  <DigitalNumpad label="Investment Term (Years)" value={inputs.years} min={1} max={100} step={1}
                     onChange={v => handleInputChange('years', v)} formatDisplay={v => `${v} Years`} />
                   <div className="input-group">
                     <label className="input-label-row">Compounding Frequency</label>
@@ -293,11 +244,11 @@ export default function Calculators({ user }: CalculatorsProps) {
               {activeCalc === 'simple' && (
                 <>
                   <h3 className="calc-section-title">➖ Simple Interest Settings</h3>
-                  <DualInput label="Principal Amount" value={inputs.simplePrincipal} min={100} max={10000000} step={100}
+                  <DigitalNumpad label="Principal Amount" value={inputs.simplePrincipal} min={100} max={10000000} step={100}
                     onChange={v => handleInputChange('simplePrincipal', v)} formatDisplay={v => formatAmount(v)} />
-                  <DualInput label="Annual Interest Rate (%)" value={inputs.simpleRate} min={0.1} max={50} step={0.1}
+                  <DigitalNumpad label="Annual Interest Rate (%)" value={inputs.simpleRate} min={0.1} max={50} step={0.1}
                     onChange={v => handleInputChange('simpleRate', v)} formatDisplay={v => `${v}%`} />
-                  <DualInput label="Duration (Years)" value={inputs.simpleTime} min={0.5} max={50} step={0.5}
+                  <DigitalNumpad label="Duration (Years)" value={inputs.simpleTime} min={0.5} max={50} step={0.5}
                     onChange={v => handleInputChange('simpleTime', v)} formatDisplay={v => `${v} Years`} />
                 </>
               )}
@@ -305,13 +256,13 @@ export default function Calculators({ user }: CalculatorsProps) {
               {activeCalc === 'savings' && (
                 <>
                   <h3 className="calc-section-title">🎯 Savings Goal Settings</h3>
-                  <DualInput label="Target Savings Goal" value={inputs.targetSavings} min={1000} max={10000000} step={1000}
+                  <DigitalNumpad label="Target Savings Goal" value={inputs.targetSavings} min={1000} max={10000000} step={1000}
                     onChange={v => handleInputChange('targetSavings', v)} formatDisplay={v => formatAmount(v)} />
-                  <DualInput label="Starting Balance" value={inputs.startingSavings} min={0} max={inputs.targetSavings} step={500}
+                  <DigitalNumpad label="Starting Balance" value={inputs.startingSavings} min={0} max={inputs.targetSavings} step={500}
                     onChange={v => handleInputChange('startingSavings', v)} formatDisplay={v => formatAmount(v)} />
-                  <DualInput label="Monthly Savings" value={inputs.savingsMonthly} min={10} max={100000} step={10}
+                  <DigitalNumpad label="Monthly Savings" value={inputs.savingsMonthly} min={10} max={100000} step={10}
                     onChange={v => handleInputChange('savingsMonthly', v)} formatDisplay={v => `${formatAmount(v)}/mo`} />
-                  <DualInput label="Savings APY (%)" value={inputs.savingsRate} min={0} max={25} step={0.1}
+                  <DigitalNumpad label="Savings APY (%)" value={inputs.savingsRate} min={0} max={25} step={0.1}
                     onChange={v => handleInputChange('savingsRate', v)} formatDisplay={v => `${v}% APY`} />
                 </>
               )}
@@ -388,10 +339,6 @@ export default function Calculators({ user }: CalculatorsProps) {
                   </div>
                 </>
               )}
-
-              <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.1)', fontSize: '11px', opacity: 0.7 }}>
-                💱 All values in selected currency &bull; Use sliders or type directly
-              </div>
             </div>
           </div>
         </div>
