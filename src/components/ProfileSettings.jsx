@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useToast } from './ToastContext';
+import { useCurrency } from './CurrencyContext';
 
-export default function ProfileSettings({ user, onUpdateUser, onLogout }) {
+export default function ProfileSettings({ user, onUpdateUser, onLogout, onConfetti }) {
+  const addToast = useToast();
+  const { currency, setCurrency, currencyNames } = useCurrency();
   const [apiKey, setApiKey] = useState('');
   const [showKey, setShowKey] = useState(false);
   
@@ -70,18 +74,19 @@ export default function ProfileSettings({ user, onUpdateUser, onLogout }) {
     };
 
     onUpdateUser(updatedUser);
-    alert('Profile parameters updated successfully! Changes are applied across your dashboard.');
+    addToast('✅ Profile updated successfully! Dashboard reflects changes.', 'success', 3000);
+    if (onConfetti) onConfetti();
   };
 
   const handleSaveApiKey = () => {
     localStorage.setItem('fin_gemini_key', apiKey);
-    alert('Gemini API key saved successfully! The AI Financial Coach will now use real-time AI.');
+    addToast('🔑 Gemini API key saved! AI Coach now uses real-time AI.', 'success', 3000);
   };
 
   const handleClearApiKey = () => {
     localStorage.removeItem('fin_gemini_key');
     setApiKey('');
-    alert('Gemini API key removed. Reverted to offline rule-based AI Coach.');
+    addToast('🗑️ API key cleared. Using offline rule-based AI Coach.', 'info', 3000);
   };
 
   const handleToggleTheme = () => {
@@ -106,7 +111,9 @@ export default function ProfileSettings({ user, onUpdateUser, onLogout }) {
           localStorage.setItem('fin_users', JSON.stringify(users));
         }
       }
-    }, 1500); // simulate delay
+    }, 1500);
+    addToast('🔄 Syncing your data...', 'info', 1500);
+    setTimeout(() => addToast('✅ Sync complete! Local backup updated.', 'success', 3000), 1600);
   };
 
   const handleExportData = () => {
@@ -117,13 +124,15 @@ export default function ProfileSettings({ user, onUpdateUser, onLogout }) {
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
+    addToast('📥 Profile data exported as JSON!', 'success', 3000);
   };
 
   const handleResetApplication = () => {
     if (window.confirm('WARNING: This will clear all local storage accounts, forum posts, and progress. Proceed?')) {
       localStorage.clear();
       onLogout();
-      window.location.reload();
+      addToast('💥 Application data has been reset.', 'warning', 4000);
+      setTimeout(() => window.location.reload(), 500);
     }
   };
 
@@ -163,6 +172,32 @@ export default function ProfileSettings({ user, onUpdateUser, onLogout }) {
                   <span className="switch-slider"></span>
                 </label>
               </div>
+            </div>
+          </div>
+
+          {/* Card: Currency Preference */}
+          <div className="card">
+            <h3 className="card-title">💱 Currency Settings</h3>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>
+              Choose your preferred display currency. All financial amounts across the app will be converted and shown in this currency.
+            </p>
+            <div className="input-group">
+              <label className="input-label-row">Display Currency</label>
+              <select 
+                className="number-input-field"
+                value={currency}
+                onChange={e => {
+                  setCurrency(e.target.value);
+                  addToast(`💱 Currency changed to ${currencyNames[e.target.value]}`, 'info', 3000);
+                }}
+              >
+                {Object.entries(currencyNames).map(([code, name]) => (
+                  <option key={code} value={code}>{code} - {name}</option>
+                ))}
+              </select>
+            </div>
+            <div style={{ marginTop: '12px', padding: '10px', backgroundColor: 'var(--bg-surface-muted)', borderRadius: 'var(--radius-md)', fontSize: '12px', color: 'var(--text-muted)' }}>
+              🌍 <strong>African Markets Focus:</strong> We support NGN (Nigeria), KES (Kenya), GHS (Ghana), ZAR (South Africa), and EGP (Egypt) — along with major global currencies.
             </div>
           </div>
 

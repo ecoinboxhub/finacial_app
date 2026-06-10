@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useToast } from './ToastContext';
 
 export default function Community({ user, onAuthRequest }) {
+  const addToast = useToast();
   const [posts, setPosts] = useState([]);
   const [showCreate, setShowCreate] = useState(false);
   const [newTitle, setNewTitle] = useState('');
@@ -95,10 +97,10 @@ export default function Community({ user, onAuthRequest }) {
     const updated = [newPost, ...posts];
     savePosts(updated);
 
-    // Clear inputs
     setNewTitle('');
     setNewBody('');
     setShowCreate(false);
+    addToast('📝 Your post has been published!', 'success', 3000);
   };
 
   const handleLike = (postId) => {
@@ -116,11 +118,10 @@ export default function Community({ user, onAuthRequest }) {
         let newLikedBy = [...likedBy];
 
         if (index === -1) {
-          // Like
           newLikes += 1;
           newLikedBy.push(user.email);
+          addToast('👍 You liked this post!', 'info', 2000);
         } else {
-          // Unlike
           newLikes -= 1;
           newLikedBy.splice(index, 1);
         }
@@ -157,6 +158,7 @@ export default function Community({ user, onAuthRequest }) {
 
     savePosts(updated);
     setCommentText('');
+    addToast('💬 Comment added!', 'success', 2000);
   };
 
   return (

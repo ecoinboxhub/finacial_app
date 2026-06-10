@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useToast } from './ToastContext';
 
 export default function AiAssistant({ chatPrompt, clearChatPrompt }) {
+  const addToast = useToast();
   const [messages, setMessages] = useState([
     {
       sender: 'bot',
@@ -139,6 +141,16 @@ Let me know if you want to detail a specific topic!`;
     
     setMessages(prev => [...prev, { sender: 'bot', text: botReply, timestamp: new Date() }]);
     setIsLoading(false);
+    
+    const lower = text.toLowerCase();
+    if (lower.includes('thank')) {
+      addToast('🙌 You are welcome! Keep learning!', 'success', 3000);
+    }
+  };
+
+  const handleChipClick = (chip) => {
+    handleSendMessage(chip);
+    addToast(`💡 Exploring: "${chip}"`, 'info', 2000);
   };
 
   const helperChips = [
@@ -197,7 +209,7 @@ Let me know if you want to detail a specific topic!`;
             key={idx}
             className="module-tab-btn"
             style={{ fontSize: '11px', padding: '6px 12px', borderStyle: 'dashed' }}
-            onClick={() => handleSendMessage(chip)}
+            onClick={() => handleChipClick(chip)}
           >
             💡 {chip}
           </button>

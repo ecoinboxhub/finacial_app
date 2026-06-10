@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useToast } from './ToastContext';
 
 export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialTab = 'login' }) {
+  const addToast = useToast();
   const [tab, setTab] = useState(initialTab); // 'login' | 'signup' | 'reset'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,6 +25,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialTab =
         localStorage.setItem('fin_current_user', JSON.stringify(user));
         onAuthSuccess(user);
         onClose();
+        addToast(`👋 Welcome back, ${user.name}!`, 'success', 3000);
       } else {
         setError('Invalid email or password.');
       }
@@ -62,14 +65,16 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialTab =
       localStorage.setItem('fin_current_user', JSON.stringify(newUser));
       onAuthSuccess(newUser);
       onClose();
+      addToast(`🎉 Account created! Welcome, ${name}!`, 'success', 4000);
     } else if (tab === 'reset') {
       const users = JSON.parse(localStorage.getItem('fin_users') || '[]');
       const userIndex = users.findIndex(u => u.email === email);
 
       if (userIndex !== -1) {
-        setSuccess('Password reset link simulated! In offline mode, your password has been reset to "password123".');
+        setSuccess('Password reset link simulated! Your password has been reset to "password123".');
         users[userIndex].password = 'password123';
         localStorage.setItem('fin_users', JSON.stringify(users));
+        addToast('🔑 Password reset to "password123". Please log in.', 'info', 4000);
       } else {
         setError('No account found with this email.');
       }

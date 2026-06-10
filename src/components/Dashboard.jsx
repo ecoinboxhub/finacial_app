@@ -1,7 +1,11 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useToast } from './ToastContext';
+import { useCurrency } from './CurrencyContext';
 
-export default function Dashboard({ user, totalModules = 19 }) {
-  // Safe fallbacks for user data
+export default function Dashboard({ user, onUpdateUser, onConfetti, totalModules = 19 }) {
+  const addToast = useToast();
+  const { formatAmount } = useCurrency();
+
   const name = user?.name || 'Guest User';
   const balance = user?.balance ?? 15000;
   const savings = user?.savings ?? 5000;
@@ -10,14 +14,16 @@ export default function Dashboard({ user, totalModules = 19 }) {
   const completedCount = user?.completedModules?.length || 0;
   const progressPercent = Math.round((completedCount / totalModules) * 100);
 
-  // SVG parameters for progress ring
+  useEffect(() => {
+    addToast(`Welcome back, ${name}! Your net worth is ${formatAmount(balance + savings + investments - debts)}`, 'info', 4000);
+  }, []);
+
   const radius = 50;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (progressPercent / 100) * circumference;
 
-  // Projection logic
   const monthlyContribution = (user?.budgetSavings || 800) + (user?.budgetInvestments || 500);
-  const annualRate = 0.08; // 8% expected return
+  const annualRate = 0.08;
   const projectSavings = (years) => {
     let total = investments + savings;
     for (let i = 0; i < years * 12; i++) {
@@ -30,7 +36,6 @@ export default function Dashboard({ user, totalModules = 19 }) {
   const proj10yr = projectSavings(10);
   const proj20yr = projectSavings(20);
 
-  // Budget data
   const budgetItems = [
     { name: 'Housing & Rent', spent: user?.budgetHousing || 1200, limit: user?.budgetHousing || 1200, color: '#3b82f6' },
     { name: 'Food & Groceries', spent: Math.round((user?.budgetFood || 500) * 0.82), limit: user?.budgetFood || 500, color: '#10b981' },
@@ -39,58 +44,63 @@ export default function Dashboard({ user, totalModules = 19 }) {
     { name: 'Investments Allocation', spent: user?.budgetInvestments || 500, limit: user?.budgetInvestments || 500, color: '#06b6d4' }
   ];
 
+  const netWorth = balance + savings + investments - debts;
+
+  if (completedCount >= 5 && completedCount < 12) {
+    // Already handled by onConfetti in parent - first visit shows beginner rank
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       
-      {/* Welcome Message */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', fontWeight: '800', marginBottom: '4px' }}>
-            Welcome back, {name}!
+            👋 Welcome back, {name}!
           </h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>
-            Here is your financial education and investment progress overview.
+            Your financial education journey — tailored for students, entrepreneurs, and professionals across Africa.
           </p>
         </div>
-        <div className="badge info" style={{ padding: '8px 16px', fontSize: '12px' }}>
-          Offline Sandbox Mode
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <span className="market-badge">🌍 African Markets</span>
+          <div className="badge info" style={{ padding: '8px 16px', fontSize: '12px' }}>
+            Offline Sandbox
+          </div>
         </div>
       </div>
 
-      {/* Stats Cards Row */}
       <div className="grid-3">
-        <div className="card stat-card">
+        <div className="card stat-card stagger-item" style={{ animationDelay: '0s' }}>
           <div className="stat-icon" style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: 'var(--color-success)' }}>💰</div>
           <div className="stat-info">
             <span className="stat-label">Net Portfolio Worth</span>
-            <span className="stat-value">${(balance + savings + investments - debts).toLocaleString()}</span>
+            <span className="stat-value count-up">{formatAmount(netWorth)}</span>
             <span className="stat-trend up">▲ 4.2% this month</span>
           </div>
         </div>
 
-        <div className="card stat-card">
+        <div className="card stat-card stagger-item" style={{ animationDelay: '0.1s' }}>
           <div className="stat-icon" style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', color: 'var(--border-focus)' }}>📈</div>
           <div className="stat-info">
             <span className="stat-label">Investments & Savings</span>
-            <span className="stat-value">${(savings + investments).toLocaleString()}</span>
-            <span className="stat-trend up">▲ ${(monthlyContribution).toLocaleString()}/mo automated</span>
+            <span className="stat-value count-up">{formatAmount(savings + investments)}</span>
+            <span className="stat-trend up">▲ {formatAmount(monthlyContribution)}/mo automated</span>
           </div>
         </div>
 
-        <div className="card stat-card">
+        <div className="card stat-card stagger-item" style={{ animationDelay: '0.2s' }}>
           <div className="stat-icon" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'var(--color-danger)' }}>💳</div>
           <div className="stat-info">
             <span className="stat-label">Total Debt Balance</span>
-            <span className="stat-value">${debts.toLocaleString()}</span>
-            <span className="stat-trend down">▼ Paydown: $250/mo</span>
+            <span className="stat-value count-up">{formatAmount(debts)}</span>
+            <span className="stat-trend down">▼ Paydown: {formatAmount(250)}/mo</span>
           </div>
         </div>
       </div>
 
-      {/* Main Split Row */}
       <div className="grid-2">
-        {/* Left Card: Budget Tracker */}
-        <div className="card">
+        <div className="card stagger-item" style={{ animationDelay: '0.15s' }}>
           <h3 className="card-title">📊 Budget & Expense Allocations</h3>
           <div className="budget-visualizer">
             {budgetItems.map((item, idx) => {
@@ -99,7 +109,7 @@ export default function Dashboard({ user, totalModules = 19 }) {
                 <div key={idx} className="budget-bar-group">
                   <div className="budget-label-row">
                     <span className="budget-category">{item.name}</span>
-                    <span className="budget-values">${item.spent} / ${item.limit} ({percentage}%)</span>
+                    <span className="budget-values">{formatAmount(item.spent)} / {formatAmount(item.limit)} ({percentage}%)</span>
                   </div>
                   <div className="budget-bar-container">
                     <div 
@@ -117,8 +127,7 @@ export default function Dashboard({ user, totalModules = 19 }) {
           </div>
         </div>
 
-        {/* Right Card: Learning Progress & Goals */}
-        <div className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+        <div className="card stagger-item" style={{ animationDelay: '0.25s' }}>
           <h3 className="card-title">🎓 Financial Literacy Progress</h3>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around', margin: '16px 0', flexWrap: 'wrap', gap: '20px' }}>
             <div className="progress-ring-container">
@@ -145,7 +154,7 @@ export default function Dashboard({ user, totalModules = 19 }) {
                 />
               </svg>
               <div className="progress-ring-label">
-                <span className="progress-percent">{progressPercent}%</span>
+                <span className="progress-percent count-up">{progressPercent}%</span>
                 <span className="progress-text">Modules Done</span>
               </div>
             </div>
@@ -156,9 +165,9 @@ export default function Dashboard({ user, totalModules = 19 }) {
                 <span style={{ fontWeight: '700' }}>{completedCount} / {totalModules}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                <span style={{ fontWeight: '600' }}>Rank Level</span>
+                <span style={{ fontWeight: '600' }}>Your Rank</span>
                 <span style={{ fontWeight: '700', color: 'var(--color-info)' }}>
-                  {completedCount < 5 ? 'Beginner' : completedCount < 12 ? 'Intermediate' : 'Finance Scholar'}
+                  {completedCount < 5 ? '🌱 Beginner' : completedCount < 12 ? '📘 Intermediate' : '🎓 Finance Scholar'}
                 </span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
@@ -168,43 +177,38 @@ export default function Dashboard({ user, totalModules = 19 }) {
             </div>
           </div>
           
-          <div style={{ backgroundColor: 'var(--bg-surface-muted)', padding: '12px', borderRadius: 'var(--radius-md)', fontSize: '13px', textAlign: 'center' }}>
-            🔔 <strong>Tip of the Day:</strong> Invest early to let compound interest work its magic. Compounding growth builds wealth exponentially over time!
+          <div className="onboarding-tip">
+            💡 <strong>Tip:</strong> Complete your learning modules to unlock the "Finance Scholar" rank. African entrepreneurs who understand compound interest build 3x more wealth over their lifetime!
           </div>
         </div>
       </div>
 
-      {/* Projection & Insights Section */}
-      <div className="card">
+      <div className="card stagger-item" style={{ animationDelay: '0.3s' }}>
         <h3 className="card-title">🔮 Future Wealth Projection (8% Compounding Growth)</h3>
         <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '20px' }}>
-          By investing/saving your current monthly buffer of <strong>${monthlyContribution}/month</strong>, here is how your investments would grow over time:
+          By investing/saving <strong>{formatAmount(monthlyContribution)}/month</strong>, here is how your investments would grow — even starting small, like many students and young professionals do:
         </p>
 
         <div style={{ display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: '20px', textAlign: 'center' }}>
-          <div style={{ flex: '1', minWidth: '150px', padding: '16px', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--bg-surface-muted)' }}>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', marginBottom: '8px' }}>5 Years</div>
-            <div style={{ fontSize: '24px', fontWeight: '800', color: '#0284c7' }}>${proj5yr.toLocaleString()}</div>
-            <div style={{ height: '4px', width: '60%', background: '#0284c7', margin: '8px auto 0 auto', borderRadius: '2px' }} />
-          </div>
-
-          <div style={{ flex: '1', minWidth: '150px', padding: '16px', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--bg-surface-muted)' }}>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', marginBottom: '8px' }}>10 Years</div>
-            <div style={{ fontSize: '24px', fontWeight: '800', color: '#8b5cf6' }}>${proj10yr.toLocaleString()}</div>
-            <div style={{ height: '4px', width: '80%', background: '#8b5cf6', margin: '8px auto 0 auto', borderRadius: '2px' }} />
-          </div>
-
-          <div style={{ flex: '1', minWidth: '150px', padding: '16px', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--bg-surface-muted)' }}>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', marginBottom: '8px' }}>20 Years</div>
-            <div style={{ fontSize: '28px', fontWeight: '800', color: '#10b981' }}>${proj20yr.toLocaleString()}</div>
-            <div style={{ height: '4px', width: '100%', background: '#10b981', margin: '8px auto 0 auto', borderRadius: '2px' }} />
-          </div>
+          {[
+            { label: '5 Years', value: proj5yr, color: '#0284c7', width: '60%' },
+            { label: '10 Years', value: proj10yr, color: '#8b5cf6', width: '80%' },
+            { label: '20 Years', value: proj20yr, color: '#10b981', width: '100%' }
+          ].map((item, idx) => (
+            <div key={idx} className="card" style={{ flex: '1', minWidth: '150px', backgroundColor: 'var(--bg-surface-muted)', border: 'none', cursor: 'default' }}
+              onMouseEnter={() => addToast(`${item.label} projection: ${formatAmount(item.value)}`, 'info', 2000)}
+            >
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', marginBottom: '8px' }}>{item.label}</div>
+              <div style={{ fontSize: '24px', fontWeight: '800', color: item.color }}>{formatAmount(item.value)}</div>
+              <div style={{ height: '4px', width: item.width, background: item.color, margin: '8px auto 0 auto', borderRadius: '2px', transition: 'width 0.5s ease' }} />
+            </div>
+          ))}
         </div>
 
         <div style={{ marginTop: '20px', padding: '14px', border: '1px dashed var(--border-color)', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span style={{ fontSize: '20px' }}>💡</span>
+          <span style={{ fontSize: '20px' }}>🌍</span>
           <span style={{ fontSize: '13px', textAlign: 'left', lineHeight: '1.4' }}>
-            Compounding projections assume monthly deposits with an average annual market growth rate of 8%. Regular small savings add up significantly over 10-20 year horizons.
+            <strong>African Market Context:</strong> In many African economies, inflation averages 8-15%. Investing in assets that outpace inflation (stocks, bonds, real estate, T-Bills) is essential. Even {formatAmount(5000)} saved early can grow to {formatAmount(proj10yr)} in a decade with consistent contributions.
           </span>
         </div>
       </div>
