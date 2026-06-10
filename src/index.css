@@ -999,21 +999,31 @@ button, input, select, textarea {
 }
 
 .chat-send-btn {
-  width: 44px;
-  height: 44px;
+  padding: 12px 24px;
   border-radius: var(--radius-full);
   border: none;
   background: var(--grad-primary);
   color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
-  transition: transform var(--transition-fast);
+  transition: all var(--transition-fast);
+  white-space: nowrap;
 }
 
 .chat-send-btn:hover {
-  transform: scale(1.05);
+  filter: brightness(1.1);
+}
+
+.chat-send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: none;
+}
+
+.loading-dot {
+  display: inline-block;
+  animation: fadeIn 1s infinite;
 }
 
 /* Forum Community */

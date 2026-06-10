@@ -54,7 +54,7 @@ export default function ProfileSettings({ user, onUpdateUser, onLogout, onConfet
       });
     }
 
-    const storedKey = localStorage.getItem('fin_gemini_key') || '';
+    const storedKey = localStorage.getItem('fin_groq_key') || '';
     setApiKey(storedKey);
   }, [user]);
 
@@ -91,14 +91,14 @@ export default function ProfileSettings({ user, onUpdateUser, onLogout, onConfet
   };
 
   const handleSaveApiKey = () => {
-    localStorage.setItem('fin_gemini_key', apiKey);
-    addToast('🔑 Gemini API key saved! AI Coach now uses real-time AI.', 'success', 3000);
+    localStorage.setItem('fin_groq_key', apiKey);
+    addToast('Groq API key saved. AI Coach will use the Groq API.', 'success', 3000);
   };
 
   const handleClearApiKey = () => {
-    localStorage.removeItem('fin_gemini_key');
-    setApiKey('');
-    addToast('🗑️ API key cleared. Using offline rule-based AI Coach.', 'info', 3000);
+    localStorage.setItem('fin_groq_key', 'gsk_7zJ4HU7PrMgW29qEzLh0WGdyb3FYhsuZHWoIPdvZx1BkAh16');
+    setApiKey('gsk_7zJ4HU7PrMgW29qEzLh0WGdyb3FYhsuZHWoIPdvZx1BkAh16');
+    addToast('Reset to default Groq API key.', 'info', 3000);
   };
 
   const handleToggleTheme = () => {
@@ -206,13 +206,13 @@ export default function ProfileSettings({ user, onUpdateUser, onLogout, onConfet
           </div>
 
           <div className="card">
-            <h3 className="card-title">🤖 Gemini AI Assistant Settings</h3>
+            <h3 className="card-title">AI Assistant Settings</h3>
             <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>
-              Add a personal Google Gemini API Key to enable advanced conversational intelligence.
+              The AI Assistant uses Groq API with the llama-3.3-70b model. A default API key is pre-configured. You can replace it with your own Groq API key here.
             </p>
             <div className="input-group" style={{ marginBottom: '16px' }}>
               <label className="input-label-row">
-                <span>Gemini API Key</span>
+                <span>Groq API Key</span>
                 <button
                   style={{ background: 'transparent', border: 'none', color: 'var(--border-focus)', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}
                   onClick={() => setShowKey(!showKey)}
@@ -223,7 +223,7 @@ export default function ProfileSettings({ user, onUpdateUser, onLogout, onConfet
               <input
                 type={showKey ? 'text' : 'password'}
                 className="number-input-field"
-                placeholder="AIzaSy..."
+                placeholder="gsk_..."
                 value={apiKey}
                 onChange={e => setApiKey(e.target.value)}
               />
@@ -232,11 +232,9 @@ export default function ProfileSettings({ user, onUpdateUser, onLogout, onConfet
               <button className="auth-button login" onClick={handleSaveApiKey} style={{ flex: 1, justifyContent: 'center' }}>
                 Save API Key
               </button>
-              {apiKey && (
-                <button className="auth-button logout" onClick={handleClearApiKey} style={{ justifyContent: 'center' }}>
-                  Clear Key
-                </button>
-              )}
+              <button className="auth-button logout" onClick={handleClearApiKey} style={{ justifyContent: 'center' }}>
+                Reset to Default
+              </button>
             </div>
           </div>
 
