@@ -1905,3 +1905,141 @@ input:checked + .switch-slider:before {
   background: var(--grad-primary);
   box-shadow: 0 4px 18px rgba(13, 148, 136, 0.45);
 }
+
+/* ===== DUAL INPUT (Slider + Number Field) ===== */
+.dual-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dual-input-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dual-input-row .slider-input {
+  flex: 1;
+}
+
+.dual-number-input {
+  width: 120px !important;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .dual-input-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .dual-number-input {
+    width: 100% !important;
+  }
+}
+
+/* ===== CALCULATOR DISPLAY ===== */
+.calc-display {
+  background: var(--bg-surface-muted);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  text-align: right;
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.calc-display-value {
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-main);
+  overflow-x: auto;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+/* ===== CALCULATOR KEYPAD GRID ===== */
+.calc-keypad {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.calc-keypad button {
+  aspect-ratio: auto;
+  min-height: 48px;
+}
+
+.calc-keypad button:hover {
+  filter: brightness(1.1);
+}
+
+.calc-keypad button:active {
+  transform: scale(0.95);
+}
+
+/* ===== CALCULATOR MEMORY ROW ===== */
+.calc-memory-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.calc-memory-row button {
+  flex: 1;
+  min-width: 60px;
+  font-size: 12px !important;
+  padding: 8px 12px !important;
+}
+
+/* ===== CALCULATOR HISTORY PANEL ===== */
+.calc-history-panel {
+  background: var(--bg-surface-muted);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.calc-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.calc-history-item {
+  font-size: 13px;
+  padding: 8px 12px;
+  background: var(--bg-surface);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--color-info);
+  font-family: monospace;
+  color: var(--text-main);
+  animation: slideUp 0.2s ease;
+}
+
+/* ===== CALCULATOR SECTION TITLE ===== */
+.calc-section-title {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 18px;
+  margin-bottom: 8px;
+  color: var(--text-main);
+}
+
+/* ===== RESPONSIVE CALCULATOR GRID ===== */
+@media (max-width: 768px) {
+  .calc-keypad button {
+    min-height: 44px;
+    font-size: 1rem !important;
+    padding: 12px 6px !important;
+  }
+  .calc-display-value {
+    font-size: 1.5rem;
+  }
+}
