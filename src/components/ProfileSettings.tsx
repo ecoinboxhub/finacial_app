@@ -15,6 +15,7 @@ export default function ProfileSettings({ user, onUpdateUser, onLogout, onConfet
   const addToast = useToast();
   const { currency, setCurrency, currencyNames } = useCurrency();
   const [apiKey, setApiKey] = useState('');
+  const [openRouterKey, setOpenRouterKey] = useState('');
   const [showKey, setShowKey] = useState(false);
 
   const [profile, setProfile] = useState({
@@ -54,8 +55,10 @@ export default function ProfileSettings({ user, onUpdateUser, onLogout, onConfet
       });
     }
 
-    const storedKey = localStorage.getItem('fin_groq_key') || '';
-    setApiKey(storedKey);
+    const storedGroq = localStorage.getItem('fin_groq_key') || '';
+    const storedOR = localStorage.getItem('fin_openrouter_key') || '';
+    setApiKey(storedGroq);
+    setOpenRouterKey(storedOR);
   }, [user]);
 
   const handleInputChange = (field: string, val: string | number) => {
@@ -92,13 +95,12 @@ export default function ProfileSettings({ user, onUpdateUser, onLogout, onConfet
 
   const handleSaveApiKey = () => {
     localStorage.setItem('fin_groq_key', apiKey);
-    addToast('Groq API key saved. AI Coach will use the Groq API.', 'success', 3000);
+    addToast('API key saved.', 'success', 3000);
   };
 
-  const handleClearApiKey = () => {
-    localStorage.setItem('fin_groq_key', 'gsk_7zJ4HU7PrMgW29qEzLh0WGdyb3FYhsuZHWoIPdvZx1BkAh16');
-    setApiKey('gsk_7zJ4HU7PrMgW29qEzLh0WGdyb3FYhsuZHWoIPdvZx1BkAh16');
-    addToast('Reset to default Groq API key.', 'info', 3000);
+  const handleSaveOpenRouterKey = () => {
+    localStorage.setItem('fin_openrouter_key', openRouterKey);
+    addToast('Fallback API key saved.', 'success', 3000);
   };
 
   const handleToggleTheme = () => {
@@ -208,11 +210,11 @@ export default function ProfileSettings({ user, onUpdateUser, onLogout, onConfet
           <div className="card">
             <h3 className="card-title">AI Assistant Settings</h3>
             <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>
-              The AI Assistant uses Groq API with the llama-3.3-70b model. A default API key is pre-configured. You can replace it with your own Groq API key here.
+              The AI Assistant is pre-configured with API keys. You can replace them with your own keys below.
             </p>
             <div className="input-group" style={{ marginBottom: '16px' }}>
               <label className="input-label-row">
-                <span>Groq API Key</span>
+                <span>Primary API Key</span>
                 <button
                   style={{ background: 'transparent', border: 'none', color: 'var(--border-focus)', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}
                   onClick={() => setShowKey(!showKey)}
@@ -223,19 +225,29 @@ export default function ProfileSettings({ user, onUpdateUser, onLogout, onConfet
               <input
                 type={showKey ? 'text' : 'password'}
                 className="number-input-field"
-                placeholder="gsk_..."
+                placeholder="API key"
                 value={apiKey}
                 onChange={e => setApiKey(e.target.value)}
               />
             </div>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button className="auth-button login" onClick={handleSaveApiKey} style={{ flex: 1, justifyContent: 'center' }}>
-                Save API Key
-              </button>
-              <button className="auth-button logout" onClick={handleClearApiKey} style={{ justifyContent: 'center' }}>
-                Reset to Default
-              </button>
+            <button className="auth-button login" onClick={handleSaveApiKey} style={{ width: '100%', justifyContent: 'center', marginBottom: '12px' }}>
+              Save Primary Key
+            </button>
+            <div className="input-group" style={{ marginBottom: '16px' }}>
+              <label className="input-label-row">
+                <span>Fallback API Key</span>
+              </label>
+              <input
+                type="password"
+                className="number-input-field"
+                placeholder="Fallback key"
+                value={openRouterKey}
+                onChange={e => setOpenRouterKey(e.target.value)}
+              />
             </div>
+            <button className="auth-button logout" onClick={handleSaveOpenRouterKey} style={{ width: '100%', justifyContent: 'center' }}>
+              Save Fallback Key
+            </button>
           </div>
 
           <div className="card">

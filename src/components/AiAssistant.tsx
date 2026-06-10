@@ -2,8 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useToast } from './ToastContext';
 import type { ChatMessage } from '../types';
 
-const DEFAULT_GROQ_KEY = 'gsk_7zJ4HU7PrMgW29qEzLh0WGdyb3FYhsuZHWoIPdvZx1BkAh16';
-const GROQ_MODEL = 'llama-3.3-70b-versatile';
+const SECRET_GROQ_KEY = import.meta.env.VITE_GROQ_KEY || '';
+const SECRET_OPENROUTER_KEY = import.meta.env.VITE_OPENROUTER_KEY || '';
 
 interface AiAssistantProps {
   chatPrompt: string;
@@ -26,6 +26,86 @@ function sanitizeText(text: string): string {
     .trim();
 }
 
+function buildSystemPrompt(): string {
+  return [
+    'You are a financial education and investment coach. Your role is to provide clear, accurate, and beginner-friendly financial guidance.',
+    '',
+    'Response rules:',
+    '- Use only plain text with proper punctuation.',
+    '- Do not use any emojis, icons, or special Unicode characters.',
+    '- Do not use markdown formatting such as asterisks or backticks.',
+    '- Use numbered lists or bullet points (hyphens) where appropriate.',
+    '- Keep paragraphs short and well-structured.',
+    '- Include a disclaimer at the end of each response.',
+    '- Focus purely on financial education and literacy.',
+    '- Never provide certified legal or investment action advice.',
+  ].join('\n');
+}
+
+async function callGroq(apiKey: string, userText: string, systemPrompt: string): Promise<string> {
+  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userText },
+      ],
+      temperature: 0.7,
+      max_tokens: 1024,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (data.error) {
+    throw new Error(data.error.message || 'API error');
+  }
+
+  if (data.choices && data.choices[0]?.message?.content) {
+    return data.choices[0].message.content;
+  }
+
+  throw new Error('Invalid API response format');
+}
+
+async function callOpenRouter(apiKey: string, userText: string, systemPrompt: string): Promise<string> {
+  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+      'HTTP-Referer': 'https://financial-app-iota-rouge.vercel.app',
+      'X-Title': 'EcoFinApp',
+    },
+    body: JSON.stringify({
+      model: 'meta-llama/llama-3.3-70b-instruct',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userText },
+      ],
+      temperature: 0.7,
+      max_tokens: 1024,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (data.error) {
+    throw new Error(data.error.message || 'API error');
+  }
+
+  if (data.choices && data.choices[0]?.message?.content) {
+    return data.choices[0].message.content;
+  }
+
+  throw new Error('Invalid API response format');
+}
+
 export default function AiAssistant({ chatPrompt, clearChatPrompt }: AiAssistantProps) {
   const addToast = useToast();
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -37,16 +117,16 @@ export default function AiAssistant({ chatPrompt, clearChatPrompt }: AiAssistant
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [apiKeyReady, setApiKeyReady] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem('fin_groq_key');
-    if (!stored) {
-      localStorage.setItem('fin_groq_key', DEFAULT_GROQ_KEY);
+    if (!localStorage.getItem('fin_groq_key')) {
+      localStorage.setItem('fin_groq_key', SECRET_GROQ_KEY);
     }
-    setApiKeyReady(true);
+    if (!localStorage.getItem('fin_openrouter_key')) {
+      localStorage.setItem('fin_openrouter_key', SECRET_OPENROUTER_KEY);
+    }
   }, []);
 
   const scrollToBottom = () => {
@@ -64,63 +144,33 @@ export default function AiAssistant({ chatPrompt, clearChatPrompt }: AiAssistant
     }
   }, [chatPrompt]);
 
-  const getGroqResponse = async (userText: string): Promise<string> => {
-    const apiKey = localStorage.getItem('fin_groq_key') || DEFAULT_GROQ_KEY;
+  const getAIResponse = async (userText: string): Promise<string> => {
+    const groqKey = localStorage.getItem('fin_groq_key') || SECRET_GROQ_KEY;
+    const openRouterKey = localStorage.getItem('fin_openrouter_key') || SECRET_OPENROUTER_KEY;
+    const systemPrompt = buildSystemPrompt();
 
-    try {
-      const systemPrompt = [
-        'You are a financial education and investment coach. Your role is to provide clear, accurate, and beginner-friendly financial guidance.',
-        '',
-        'Response rules:',
-        '- Use only plain text with proper punctuation.',
-        '- Do not use any emojis, icons, or special Unicode characters.',
-        '- Do not use markdown formatting such as asterisks or backticks.',
-        '- Use numbered lists or bullet points (hyphens) where appropriate.',
-        '- Keep paragraphs short and well-structured.',
-        '- Include a disclaimer at the end of each response.',
-        '- Focus purely on financial education and literacy.',
-        '- Never provide certified legal or investment action advice.',
-      ].join('\n');
+    const groqError = await callGroq(groqKey, userText, systemPrompt).catch((err: any) => err);
 
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: GROQ_MODEL,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userText },
-          ],
-          temperature: 0.7,
-          max_tokens: 1024,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.error) {
-        throw new Error(data.error.message || 'Groq API error');
-      }
-
-      if (data.choices && data.choices[0]?.message?.content) {
-        return sanitizeText(data.choices[0].message.content);
-      } else {
-        throw new Error('Invalid API response format');
-      }
-    } catch (err: any) {
-      console.error('Groq API Error:', err);
-      const fallback = getLocalMockResponse(userText);
-      return `Error: Unable to fetch response from Groq API. ${err.message}.\n\n${fallback}`;
+    if (typeof groqError === 'string') {
+      return sanitizeText(groqError);
     }
+
+    console.warn('Groq failed, trying OpenRouter fallback:', groqError.message);
+
+    const orResult = await callOpenRouter(openRouterKey, userText, systemPrompt).catch((err: any) => err);
+
+    if (typeof orResult === 'string') {
+      return sanitizeText(orResult);
+    }
+
+    console.error('Both providers failed:', groqError.message, orResult.message);
+    return getLocalMockResponse(userText);
   };
 
   const getLocalMockResponse = (text: string): string => {
     const lower = text.toLowerCase();
 
-    let reply = 'I am here to help you learn about finance. In offline mode, I can provide preset guidance. The Groq API key is configured and will be used when the connection is available.\n\n';
+    let reply = 'I am here to help you learn about finance.\n\n';
 
     if (lower.includes('budget')) {
       reply += 'Budgeting Guidelines:\n'
@@ -178,7 +228,7 @@ export default function AiAssistant({ chatPrompt, clearChatPrompt }: AiAssistant
     setInputValue('');
     setIsLoading(true);
 
-    const botReply = await getGroqResponse(text);
+    const botReply = await getAIResponse(text);
 
     setMessages(prev => [...prev, { sender: 'bot', text: botReply, timestamp: new Date() }]);
     setIsLoading(false);
@@ -202,8 +252,6 @@ export default function AiAssistant({ chatPrompt, clearChatPrompt }: AiAssistant
     'Evaluate my risk assessment',
   ];
 
-  const hasGroqKey = !!localStorage.getItem('fin_groq_key');
-
   return (
     <div className="chat-container">
       <div className="chat-header">
@@ -211,14 +259,8 @@ export default function AiAssistant({ chatPrompt, clearChatPrompt }: AiAssistant
           <div className="chat-bot-avatar">AI</div>
           <div>
             <div className="chat-bot-title">AI Financial Coach</div>
-            <span className="chat-bot-status">Powered by Groq / llama-3.3-70b</span>
           </div>
         </div>
-        {!hasGroqKey && (
-          <div className="badge warning" style={{ fontSize: '11px' }}>
-            Using Default Key
-          </div>
-        )}
       </div>
 
       <div className="chat-messages">
