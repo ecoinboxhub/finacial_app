@@ -8,7 +8,19 @@ import ProfileSettings from './components/ProfileSettings';
 import AuthModal from './components/AuthModal';
 import { ToastProvider } from './components/ToastContext';
 import { CurrencyProvider, useCurrency } from './components/CurrencyContext';
+import { api, setAuthToken } from './api/client';
+import type { User } from './types';
 import './App.css';
+
+interface ConfettiPiece {
+  id: number;
+  left: number;
+  color: string;
+  delay: number;
+  duration: number;
+  size: number;
+  shape: string;
+}
 
 function App() {
   return (
@@ -22,24 +34,24 @@ function App() {
 
 function AppContent() {
   const [currentPage, setCurrentPage] = useState('dashboard');
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [authModalTab, setAuthModalTab] = useState('login');
+  const [authModalTab, setAuthModalTab] = useState<'login' | 'signup' | 'reset'>('login');
   const [theme, setTheme] = useState('light');
-  const [confetti, setConfetti] = useState(null);
+  const [confetti, setConfetti] = useState<ConfettiPiece[] | null>(null);
   const [chatPrompt, setChatPrompt] = useState('');
   const { currency, setCurrency, formatAmount, currencyNames } = useCurrency();
 
   const fireConfetti = () => {
     const colors = ['#f43f5e', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#ec4899'];
-    const pieces = Array.from({ length: 60 }, (_, i) => ({
+    const pieces: ConfettiPiece[] = Array.from({ length: 60 }, (_, i) => ({
       id: i,
       left: Math.random() * 100,
       color: colors[Math.floor(Math.random() * colors.length)],
       delay: Math.random() * 1.5,
       duration: 2 + Math.random() * 2,
       size: 6 + Math.random() * 8,
-      shape: Math.random() > 0.5 ? '50%' : '2px'
+      shape: Math.random() > 0.5 ? '50%' : '2px',
     }));
     setConfetti(pieces);
     setTimeout(() => setConfetti(null), 4000);
@@ -52,11 +64,27 @@ function AppContent() {
     setTheme(initialTheme);
     document.documentElement.setAttribute('data-theme', initialTheme);
 
+    const token = localStorage.getItem('fin_token');
+    if (token) {
+      api.getMe()
+        .then(userData => {
+          setUser(userData);
+        })
+        .catch(() => {
+          // Token expired or network error, fall back to local
+          loadLocalUser();
+        });
+    } else {
+      loadLocalUser();
+    }
+  }, []);
+
+  const loadLocalUser = () => {
     const currentUser = localStorage.getItem('fin_current_user');
     if (currentUser) {
       setUser(JSON.parse(currentUser));
     } else {
-      const defaultGuest = {
+      const defaultGuest: User = {
         name: 'Guest Learner',
         email: 'guest@example.com',
         balance: 12500,
@@ -70,27 +98,35 @@ function AppContent() {
         budgetSavings: 600,
         budgetInvestments: 400,
         completedModules: ['edu_budgeting'],
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       };
       setUser(defaultGuest);
     }
-  }, []);
+  };
 
-  const handleUpdateUser = (updatedUser) => {
+  const handleUpdateUser = async (updatedUser: User) => {
     setUser(updatedUser);
     localStorage.setItem('fin_current_user', JSON.stringify(updatedUser));
     const users = JSON.parse(localStorage.getItem('fin_users') || '[]');
-    const idx = users.findIndex(u => u.email === updatedUser.email);
+    const idx = users.findIndex((u: User) => u.email === updatedUser.email);
     if (idx !== -1) {
       users[idx] = updatedUser;
       localStorage.setItem('fin_users', JSON.stringify(users));
+    }
+
+    // Sync to backend
+    try {
+      await api.updateProfile(updatedUser);
+    } catch {
+      // Silently fall back
     }
   };
 
   const handleLogout = () => {
     setUser(null);
+    setAuthToken(null);
     localStorage.removeItem('fin_current_user');
-    const defaultGuest = {
+    const defaultGuest: User = {
       name: 'Guest Learner',
       email: 'guest@example.com',
       balance: 12000,
@@ -104,7 +140,7 @@ function AppContent() {
       budgetSavings: 600,
       budgetInvestments: 400,
       completedModules: [],
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
     setUser(defaultGuest);
   };
@@ -116,7 +152,7 @@ function AppContent() {
     localStorage.setItem('fin_theme', nextTheme);
   };
 
-  const handleAskAi = (prompt) => {
+  const handleAskAi = (prompt: string) => {
     setChatPrompt(prompt);
     setCurrentPage('assistant');
   };
@@ -133,13 +169,12 @@ function AppContent() {
     }
   };
 
-  const handlePageChange = (page) => {
+  const handlePageChange = (page: string) => {
     setCurrentPage(page);
   };
 
   return (
     <div className="app-container">
-      {/* Confetti overlay */}
       {confetti && (
         <div className="confetti-container">
           {confetti.map(p => (
@@ -152,8 +187,8 @@ function AppContent() {
                 width: `${p.size}px`,
                 height: `${p.size}px`,
                 borderRadius: p.shape,
-                '--fall-delay': `${p.delay}s`,
-                '--fall-duration': `${p.duration}s`
+                ['--fall-delay' as string]: `${p.delay}s`,
+                ['--fall-duration' as string]: `${p.duration}s`,
               }}
             />
           ))}
@@ -165,10 +200,10 @@ function AppContent() {
         <div className="bg-blob blob-2"></div>
         <div className="bg-blob blob-3"></div>
       </div>
-      
+
       <aside className="sidebar">
         <div className="sidebar-brand">
-          <img src="/logo.png" alt="Logo" className="brand-icon" onError={(e) => { e.target.src = '/favicon.png' }} />
+          <img src="/logo.png" alt="Logo" className="brand-icon" onError={(e) => { (e.target as HTMLImageElement).src = '/favicon.png' }} />
           <span className="brand-name">EcoFinApp</span>
         </div>
 
@@ -219,18 +254,12 @@ function AppContent() {
       </aside>
 
       <main className="main-area">
-        
         <header className="top-header">
           <h1 className="page-title">{getPageTitle()}</h1>
-          
           <div className="header-actions">
-            {/* Currency Selector */}
             <div className="currency-selector" title="Switch currency for African markets">
               <span>💱</span>
-              <select
-                value={currency}
-                onChange={e => setCurrency(e.target.value)}
-              >
+              <select value={currency} onChange={e => setCurrency(e.target.value)}>
                 {Object.entries(currencyNames).map(([code, name]) => (
                   <option key={code} value={code}>{code} - {name}</option>
                 ))}
@@ -246,8 +275,8 @@ function AppContent() {
                 Sign Out
               </button>
             ) : (
-              <button 
-                className="auth-button login btn-press" 
+              <button
+                className="auth-button login btn-press"
                 onClick={() => {
                   setAuthModalTab('login');
                   setAuthModalOpen(true);
@@ -261,43 +290,20 @@ function AppContent() {
 
         <div className="content-body page-enter" key={currentPage}>
           {currentPage === 'dashboard' && (
-            <Dashboard 
-              user={user} 
-              onUpdateUser={handleUpdateUser} 
-              onConfetti={fireConfetti}
-            />
+            <Dashboard user={user} onUpdateUser={handleUpdateUser} onConfetti={fireConfetti} />
           )}
           {currentPage === 'learning' && (
-            <LearningHub 
-              user={user} 
-              onUpdateUser={handleUpdateUser} 
-              onAskAi={handleAskAi}
-              onConfetti={fireConfetti}
-            />
+            <LearningHub user={user} onUpdateUser={handleUpdateUser} onAskAi={handleAskAi} onConfetti={fireConfetti} />
           )}
           {currentPage === 'calculators' && <Calculators user={user} />}
           {currentPage === 'assistant' && (
-            <AiAssistant 
-              chatPrompt={chatPrompt} 
-              clearChatPrompt={() => setChatPrompt('')} 
-            />
+            <AiAssistant chatPrompt={chatPrompt} clearChatPrompt={() => setChatPrompt('')} />
           )}
           {currentPage === 'community' && (
-            <Community 
-              user={user} 
-              onAuthRequest={() => {
-                setAuthModalTab('login');
-                setAuthModalOpen(true);
-              }} 
-            />
+            <Community user={user} onAuthRequest={() => { setAuthModalTab('login'); setAuthModalOpen(true); }} />
           )}
           {currentPage === 'settings' && (
-            <ProfileSettings 
-              user={user} 
-              onUpdateUser={handleUpdateUser} 
-              onLogout={handleLogout}
-              onConfetti={fireConfetti}
-            />
+            <ProfileSettings user={user} onUpdateUser={handleUpdateUser} onLogout={handleLogout} onConfetti={fireConfetti} />
           )}
         </div>
       </main>
@@ -325,13 +331,12 @@ function AppContent() {
         </button>
       </nav>
 
-      <AuthModal 
-        isOpen={authModalOpen} 
-        onClose={() => setAuthModalOpen(false)} 
-        onAuthSuccess={(loggedInUser) => setUser(loggedInUser)}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        onAuthSuccess={(loggedInUser: User) => setUser(loggedInUser)}
         initialTab={authModalTab}
       />
-
     </div>
   );
 }

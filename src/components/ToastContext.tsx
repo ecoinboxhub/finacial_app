@@ -1,15 +1,25 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 
-const ToastContext = createContext();
+type ToastType = 'success' | 'error' | 'info' | 'warning';
 
-export function useToast() {
+interface Toast {
+  id: number;
+  message: string;
+  type: ToastType;
+}
+
+type AddToast = (message: string, type?: ToastType, duration?: number) => void;
+
+const ToastContext = createContext<AddToast>(() => {});
+
+export function useToast(): AddToast {
   return useContext(ToastContext);
 }
 
-export function ToastProvider({ children }) {
-  const [toasts, setToasts] = useState([]);
+export function ToastProvider({ children }: { children: ReactNode }) {
+  const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const addToast = useCallback((message, type = 'success', duration = 3000) => {
+  const addToast: AddToast = useCallback((message, type = 'success', duration = 3000) => {
     const id = Date.now() + Math.random();
     setToasts(prev => [...prev, { id, message, type }]);
     setTimeout(() => {
@@ -17,11 +27,11 @@ export function ToastProvider({ children }) {
     }, duration);
   }, []);
 
-  const iconMap = {
+  const iconMap: Record<ToastType, string> = {
     success: '✅',
     error: '❌',
     info: '💡',
-    warning: '⚠️'
+    warning: '⚠️',
   };
 
   return (

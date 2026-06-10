@@ -4,13 +4,13 @@ import { useToast } from './ToastContext';
 export default function BasicCalculator() {
   const addToast = useToast();
   const [display, setDisplay] = useState('0');
-  const [memory, setMemory] = useState(null);
-  const [operator, setOperator] = useState(null);
-  const [prevValue, setPrevValue] = useState(null);
+  const [memory, setMemory] = useState<number | null>(null);
+  const [operator, setOperator] = useState<string | null>(null);
+  const [prevValue, setPrevValue] = useState<number | null>(null);
   const [newNumber, setNewNumber] = useState(true);
-  const [history, setHistory] = useState([]);
+  const [history, setHistory] = useState<string[]>([]);
 
-  const inputDigit = (digit) => {
+  const inputDigit = (digit: number) => {
     if (newNumber) {
       setDisplay(String(digit));
       setNewNumber(false);
@@ -95,7 +95,7 @@ export default function BasicCalculator() {
     setNewNumber(true);
   };
 
-  const performOperation = (nextOperator) => {
+  const performOperation = (nextOperator: string) => {
     const currentValue = parseFloat(display);
 
     if (prevValue === null) {
@@ -111,7 +111,7 @@ export default function BasicCalculator() {
     setOperator(nextOperator);
   };
 
-  const calculate = (a, b, op) => {
+  const calculate = (a: number, b: number, op: string): number => {
     switch (op) {
       case '+': return a + b;
       case '-': return a - b;
@@ -155,7 +155,7 @@ export default function BasicCalculator() {
 
   const clearHistory = () => setHistory([]);
 
-  const btnStyle = (color = 'var(--bg-surface-muted)') => ({
+  const btnStyle = (color = 'var(--bg-surface-muted)'): React.CSSProperties => ({
     background: color,
     border: '1px solid var(--border-color)',
     borderRadius: 'var(--radius-md)',
@@ -168,7 +168,7 @@ export default function BasicCalculator() {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    userSelect: 'none'
+    userSelect: 'none',
   });
 
   return (
@@ -242,13 +242,11 @@ export default function BasicCalculator() {
           <div className="calc-history-list">
             {history.length === 0 ? (
               <div style={{ color: 'var(--text-muted)', fontSize: '13px', textAlign: 'center', padding: '20px' }}>
-                No calculations yet.<br/>Use the keypad or keyboard to start.
+                No calculations yet.<br />Use the keypad or keyboard to start.
               </div>
             ) : (
               [...history].reverse().map((entry, idx) => (
-                <div key={idx} className="calc-history-item">
-                  {entry}
-                </div>
+                <div key={idx} className="calc-history-item">{entry}</div>
               ))
             )}
           </div>

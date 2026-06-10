@@ -1,8 +1,16 @@
 import React, { useEffect } from 'react';
 import { useToast } from './ToastContext';
 import { useCurrency } from './CurrencyContext';
+import type { User } from '../types';
 
-export default function Dashboard({ user, onUpdateUser, onConfetti, totalModules = 19 }) {
+interface DashboardProps {
+  user: User | null;
+  onUpdateUser: (user: User) => void;
+  onConfetti: () => void;
+  totalModules?: number;
+}
+
+export default function Dashboard({ user, onUpdateUser, onConfetti, totalModules = 19 }: DashboardProps) {
   const addToast = useToast();
   const { formatAmount } = useCurrency();
 
@@ -24,7 +32,8 @@ export default function Dashboard({ user, onUpdateUser, onConfetti, totalModules
 
   const monthlyContribution = (user?.budgetSavings || 800) + (user?.budgetInvestments || 500);
   const annualRate = 0.08;
-  const projectSavings = (years) => {
+
+  const projectSavings = (years: number): number => {
     let total = investments + savings;
     for (let i = 0; i < years * 12; i++) {
       total = total * (1 + annualRate / 12) + monthlyContribution;
@@ -41,18 +50,14 @@ export default function Dashboard({ user, onUpdateUser, onConfetti, totalModules
     { name: 'Food & Groceries', spent: Math.round((user?.budgetFood || 500) * 0.82), limit: user?.budgetFood || 500, color: '#10b981' },
     { name: 'Utilities & Internet', spent: Math.round((user?.budgetUtilities || 300) * 0.93), limit: user?.budgetUtilities || 300, color: '#f59e0b' },
     { name: 'Savings Allocation', spent: user?.budgetSavings || 800, limit: user?.budgetSavings || 800, color: '#8b5cf6' },
-    { name: 'Investments Allocation', spent: user?.budgetInvestments || 500, limit: user?.budgetInvestments || 500, color: '#06b6d4' }
+    { name: 'Investments Allocation', spent: user?.budgetInvestments || 500, limit: user?.budgetInvestments || 500, color: '#06b6d4' },
   ];
 
   const netWorth = balance + savings + investments - debts;
 
-  if (completedCount >= 5 && completedCount < 12) {
-    // Already handled by onConfetti in parent - first visit shows beginner rank
-  }
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', fontWeight: '800', marginBottom: '4px' }}>
@@ -65,7 +70,7 @@ export default function Dashboard({ user, onUpdateUser, onConfetti, totalModules
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <span className="market-badge">🌍 African Markets</span>
           <div className="badge info" style={{ padding: '8px 16px', fontSize: '12px' }}>
-            Offline Sandbox
+            {user?.email ? 'Online' : 'Offline Sandbox'}
           </div>
         </div>
       </div>
@@ -112,12 +117,12 @@ export default function Dashboard({ user, onUpdateUser, onConfetti, totalModules
                     <span className="budget-values">{formatAmount(item.spent)} / {formatAmount(item.limit)} ({percentage}%)</span>
                   </div>
                   <div className="budget-bar-container">
-                    <div 
-                      className="budget-bar-fill" 
-                      style={{ 
-                        width: `${percentage}%`, 
+                    <div
+                      className="budget-bar-fill"
+                      style={{
+                        width: `${percentage}%`,
                         backgroundColor: item.color,
-                        boxShadow: `0 0 8px ${item.color}44`
+                        boxShadow: `0 0 8px ${item.color}44`,
                       }}
                     />
                   </div>
@@ -158,7 +163,7 @@ export default function Dashboard({ user, onUpdateUser, onConfetti, totalModules
                 <span className="progress-text">Modules Done</span>
               </div>
             </div>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', minWidth: '180px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
                 <span style={{ fontWeight: '600' }}>Modules Completed</span>
@@ -176,7 +181,7 @@ export default function Dashboard({ user, onUpdateUser, onConfetti, totalModules
               </div>
             </div>
           </div>
-          
+
           <div className="onboarding-tip">
             💡 <strong>Tip:</strong> Complete your learning modules to unlock the "Finance Scholar" rank. African entrepreneurs who understand compound interest build 3x more wealth over their lifetime!
           </div>
@@ -193,7 +198,7 @@ export default function Dashboard({ user, onUpdateUser, onConfetti, totalModules
           {[
             { label: '5 Years', value: proj5yr, color: '#0284c7', width: '60%' },
             { label: '10 Years', value: proj10yr, color: '#8b5cf6', width: '80%' },
-            { label: '20 Years', value: proj20yr, color: '#10b981', width: '100%' }
+            { label: '20 Years', value: proj20yr, color: '#10b981', width: '100%' },
           ].map((item, idx) => (
             <div key={idx} className="card" style={{ flex: '1', minWidth: '150px', backgroundColor: 'var(--bg-surface-muted)', border: 'none', cursor: 'default' }}
               onMouseEnter={() => addToast(`${item.label} projection: ${formatAmount(item.value)}`, 'info', 2000)}
@@ -212,7 +217,6 @@ export default function Dashboard({ user, onUpdateUser, onConfetti, totalModules
           </span>
         </div>
       </div>
-
     </div>
   );
 }

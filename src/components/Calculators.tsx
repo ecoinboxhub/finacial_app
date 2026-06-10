@@ -2,10 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { useToast } from './ToastContext';
 import { useCurrency } from './CurrencyContext';
 import BasicCalculator from './BasicCalculator';
+import type { User, CalculatorInputs, CalculatorResults } from '../types';
 
-function DualInput({ label, value, onChange, min, max, step, formatDisplay, slider = true }) {
-  const handleSlider = (e) => onChange(parseFloat(e.target.value) || 0);
-  const handleNumber = (e) => {
+interface CalculatorsProps {
+  user: User | null;
+}
+
+function DualInput({ label, value, onChange, min, max, step, formatDisplay, slider = true }: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+  min?: number;
+  max?: number;
+  step?: number;
+  formatDisplay?: (v: number) => string;
+  slider?: boolean;
+}) {
+  const handleSlider = (e: React.ChangeEvent<HTMLInputElement>) => onChange(parseFloat(e.target.value) || 0);
+  const handleNumber = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value === '' ? '' : parseFloat(e.target.value);
     if (v === '' || (!isNaN(v) && v >= (min ?? -Infinity) && v <= (max ?? Infinity))) {
       onChange(v === '' ? 0 : v);
@@ -43,52 +57,45 @@ function DualInput({ label, value, onChange, min, max, step, formatDisplay, slid
   );
 }
 
-export default function Calculators({ user }) {
+export default function Calculators({ user }: CalculatorsProps) {
   const addToast = useToast();
   const { formatAmount } = useCurrency();
-  const [activeCalc, setActiveCalc] = useState('mortgage');
+  const [activeCalc, setActiveCalc] = useState<string>('mortgage');
 
-  const [inputs, setInputs] = useState({
+  const [inputs, setInputs] = useState<CalculatorInputs>({
     homePrice: 300000,
     downPayment: 60000,
     mortgageTerm: 30,
     interestRate: 6.5,
-
     principal: 10000,
     monthlyContribution: 500,
     years: 15,
     annualReturn: 8,
     compoundingFrequency: 12,
-
     simplePrincipal: 5000,
     simpleRate: 5,
     simpleTime: 3,
-
     targetSavings: 50000,
     startingSavings: 5000,
     savingsMonthly: 400,
-    savingsRate: 4
+    savingsRate: 4,
   });
 
-  const [results, setResults] = useState({
+  const [results, setResults] = useState<CalculatorResults>({
     mortgageMonthly: 0,
     mortgageTotalInterest: 0,
     mortgageTotalPayment: 0,
-
     investmentFutureValue: 0,
     investmentTotalDeposits: 0,
     investmentTotalInterest: 0,
-
     compoundFutureValue: 0,
     compoundTotalDeposits: 0,
     compoundTotalInterest: 0,
-
     simpleTotalInterest: 0,
     simpleFutureValue: 0,
-
     savingsMonthsToGoal: 0,
     savingsTotalDeposits: 0,
-    savingsTotalInterest: 0
+    savingsTotalInterest: 0,
   });
 
   useEffect(() => {
@@ -102,7 +109,7 @@ export default function Calculators({ user }) {
         mortgageMonthly = loanAmount / numberOfPayments;
       } else {
         mortgageMonthly = (loanAmount * monthlyRate * Math.pow(1 + monthlyRate, numberOfPayments)) /
-                          (Math.pow(1 + monthlyRate, numberOfPayments) - 1);
+          (Math.pow(1 + monthlyRate, numberOfPayments) - 1);
       }
     }
 
@@ -128,14 +135,9 @@ export default function Calculators({ user }) {
 
     const investmentTotalInterest = Math.max(0, investmentFutureValue - investmentTotalDeposits);
 
-    const cp = inputs.principal;
-    const cr = inputs.annualReturn / 100;
-    const ct = inputs.years;
-    const cn = inputs.compoundingFrequency;
-
-    const compoundFutureValue = cp * Math.pow(1 + cr / cn, cn * ct);
-    const compoundTotalDeposits = cp;
-    const compoundTotalInterest = Math.max(0, compoundFutureValue - cp);
+    const compoundFutureValue = p * Math.pow(1 + r / n, n * t);
+    const compoundTotalDeposits = p;
+    const compoundTotalInterest = Math.max(0, compoundFutureValue - p);
 
     const sp = inputs.simplePrincipal;
     const sr = inputs.simpleRate / 100;
@@ -172,31 +174,27 @@ export default function Calculators({ user }) {
       mortgageMonthly: Math.round(mortgageMonthly),
       mortgageTotalInterest: Math.round(mortgageTotalInterest),
       mortgageTotalPayment: Math.round(mortgageTotalPayment),
-
       investmentFutureValue: Math.round(investmentFutureValue),
       investmentTotalDeposits: Math.round(investmentTotalDeposits),
       investmentTotalInterest: Math.round(investmentTotalInterest),
-
       compoundFutureValue: Math.round(compoundFutureValue),
       compoundTotalDeposits: Math.round(compoundTotalDeposits),
       compoundTotalInterest: Math.round(compoundTotalInterest),
-
       simpleTotalInterest: Math.round(simpleTotalInterest),
       simpleFutureValue: Math.round(simpleFutureValue),
-
       savingsMonthsToGoal,
       savingsTotalDeposits: Math.round(savingsTotalDeposits),
-      savingsTotalInterest: Math.round(savingsTotalInterest)
+      savingsTotalInterest: Math.round(savingsTotalInterest),
     });
   }, [inputs]);
 
-  const handleInputChange = (name, val) => {
-    setInputs(prev => ({ ...prev, [name]: parseFloat(val) || 0 }));
+  const handleInputChange = (name: string, val: number) => {
+    setInputs(prev => ({ ...prev, [name]: parseFloat(String(val)) || 0 }));
   };
 
-  const handleCalcSwitch = (calc) => {
+  const handleCalcSwitch = (calc: string) => {
     setActiveCalc(calc);
-    const names = { mortgage: 'Mortgage', investment: 'Investment Growth', compound: 'Compound Interest', simple: 'Simple Interest', savings: 'Savings Goal', basic: 'Basic Calculator' };
+    const names: Record<string, string> = { mortgage: 'Mortgage', investment: 'Investment Growth', compound: 'Compound Interest', simple: 'Simple Interest', savings: 'Savings Goal', basic: 'Basic Calculator' };
     addToast(`Switched to ${names[calc] || calc}`, 'info', 2000);
   };
 
@@ -206,7 +204,7 @@ export default function Calculators({ user }) {
     { id: 'compound', label: '🔄 Compound' },
     { id: 'simple', label: '➖ Simple' },
     { id: 'savings', label: '🎯 Savings' },
-    { id: 'basic', label: '🔢 Basic Calc' }
+    { id: 'basic', label: '🔢 Basic Calc' },
   ];
 
   return (
@@ -228,7 +226,6 @@ export default function Calculators({ user }) {
       ) : (
         <div className="card page-enter">
           <div className="calculator-grid">
-
             <div className="calc-inputs">
               {activeCalc === 'mortgage' && (
                 <>
@@ -243,7 +240,7 @@ export default function Calculators({ user }) {
                     <label className="input-label-row">Loan Term (Years)</label>
                     <select className="number-input-field"
                       value={inputs.mortgageTerm}
-                      onChange={e => handleInputChange('mortgageTerm', e.target.value)}>
+                      onChange={e => handleInputChange('mortgageTerm', parseInt(e.target.value))}>
                       <option value={5}>5 Years</option>
                       <option value={10}>10 Years</option>
                       <option value={15}>15 Years</option>
@@ -282,7 +279,7 @@ export default function Calculators({ user }) {
                     <label className="input-label-row">Compounding Frequency</label>
                     <select className="number-input-field"
                       value={inputs.compoundingFrequency}
-                      onChange={e => handleInputChange('compoundingFrequency', e.target.value)}>
+                      onChange={e => handleInputChange('compoundingFrequency', parseInt(e.target.value))}>
                       <option value={1}>Annually</option>
                       <option value={2}>Semi-Annually</option>
                       <option value={4}>Quarterly</option>
@@ -358,7 +355,7 @@ export default function Calculators({ user }) {
                   <div className="calc-breakdown">
                     <div className="breakdown-row"><span className="breakdown-label">Initial Sum:</span><span className="breakdown-val">{formatAmount(inputs.principal)}</span></div>
                     <div className="breakdown-row"><span className="breakdown-label">Interest Compounded:</span><span className="breakdown-val">{formatAmount(results.compoundTotalInterest)}</span></div>
-                    <div className="breakdown-row"><span className="breakdown-label">Frequency:</span><span className="breakdown-val">{['','Annual','Semi-Annual','','Quarterly','','','','','','','','Monthly','','','','','','','','','','','','','','','','','','','','','','','','Daily'][inputs.compoundingFrequency] || 'Monthly'}</span></div>
+                    <div className="breakdown-row"><span className="breakdown-label">Frequency:</span><span className="breakdown-val">{['', 'Annual', 'Semi-Annual', '', 'Quarterly', '', '', '', '', '', '', '', 'Monthly', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 'Daily'][inputs.compoundingFrequency] || 'Monthly'}</span></div>
                   </div>
                 </>
               )}
@@ -396,7 +393,6 @@ export default function Calculators({ user }) {
                 💱 All values in selected currency &bull; Use sliders or type directly
               </div>
             </div>
-
           </div>
         </div>
       )}

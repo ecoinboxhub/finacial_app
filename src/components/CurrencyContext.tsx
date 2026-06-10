@@ -1,12 +1,23 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 
-const CurrencyContext = createContext();
-
-export function useCurrency() {
-  return useContext(CurrencyContext);
+interface CurrencyContextValue {
+  currency: string;
+  setCurrency: (code: string) => void;
+  formatAmount: (usdAmount: number) => string;
+  exchangeRates: Record<string, number>;
+  currencySymbols: Record<string, string>;
+  currencyNames: Record<string, string>;
 }
 
-const exchangeRates = {
+const CurrencyContext = createContext<CurrencyContextValue | null>(null);
+
+export function useCurrency(): CurrencyContextValue {
+  const ctx = useContext(CurrencyContext);
+  if (!ctx) throw new Error('useCurrency must be used within CurrencyProvider');
+  return ctx;
+}
+
+const exchangeRates: Record<string, number> = {
   USD: 1,
   NGN: 1550,
   KES: 130,
@@ -14,10 +25,10 @@ const exchangeRates = {
   ZAR: 18.2,
   EGP: 48,
   GBP: 0.79,
-  EUR: 0.92
+  EUR: 0.92,
 };
 
-const currencySymbols = {
+const currencySymbols: Record<string, string> = {
   USD: '$',
   NGN: '₦',
   KES: 'KSh',
@@ -25,10 +36,10 @@ const currencySymbols = {
   ZAR: 'R',
   EGP: 'E£',
   GBP: '£',
-  EUR: '€'
+  EUR: '€',
 };
 
-const currencyNames = {
+const currencyNames: Record<string, string> = {
   USD: 'US Dollar',
   NGN: 'Nigerian Naira',
   KES: 'Kenyan Shilling',
@@ -36,20 +47,20 @@ const currencyNames = {
   ZAR: 'South African Rand',
   EGP: 'Egyptian Pound',
   GBP: 'British Pound',
-  EUR: 'Euro'
+  EUR: 'Euro',
 };
 
-export function CurrencyProvider({ children }) {
-  const [currency, setCurrencyState] = useState(() => {
+export function CurrencyProvider({ children }: { children: ReactNode }) {
+  const [currency, setCurrencyState] = useState<string>(() => {
     return localStorage.getItem('fin_currency') || 'USD';
   });
 
-  const setCurrency = useCallback((code) => {
+  const setCurrency = useCallback((code: string) => {
     setCurrencyState(code);
     localStorage.setItem('fin_currency', code);
   }, []);
 
-  const formatAmount = useCallback((usdAmount) => {
+  const formatAmount = useCallback((usdAmount: number): string => {
     const rate = exchangeRates[currency] || 1;
     const converted = (usdAmount || 0) * rate;
     const symbol = currencySymbols[currency] || '$';
