@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { useCurrency } from './CurrencyContext';
+import React, { useState } from 'react';
+import type { User, HealthFundContribution } from '../types';
 import { useToast } from './ToastContext';
-import type { User, HealthFund } from '../types';
 import { recommendHealthFund } from '../utils/healthCalculations';
 
 interface Props {
@@ -10,105 +9,182 @@ interface Props {
 }
 
 export default function EmergencyHealthFund({ user, onUpdateUser }: Props) {
-  const { formatAmount } = useCurrency();
-  const addToast = useToast();
+  const { addToast } = (require("./ToastContext") as any).useToast ? (require("./ToastContext") as any).useToast() : (require("./ToastContext") as any).useToast();
+  const fund = user?.healthFund || {
+    id: 'hf-default',
+    name: 'Emergency Health Fund',
+    target: 0,
+    balance: 0,
+    contributions: [] as HealthFundContribution[],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  const [target, setTarget] = useState<number>(fund.target);
+  const [balance, setBalance] = useState<number>(fund.balance);
+  const [contribAmount, setContribAmount] = useState<number>(1000);
+  const [note, setNote] = useState<string>('');
+  const [showCalc, setShowCalc] = useState<boolean>(false);
 
-  const [monthlyIncome, setMonthlyIncome] = useState(user?.monthlyIncome || 0);
-  const [monthlyEssentials, setMonthlyEssentials] = useState(
-    (user?.budgetHousing || 0) + (user?.budgetFood || 0) + (user?.budgetUtilities || 0)
-  );
-  const [currentSavings, setCurrentSavings] = useState(user?.savings || 0);
-  const [monthlyHealthcare, setMonthlyHealthcare] = useState(0);
-  const [insuranceStatus, setInsuranceStatus] = useState<'none' | 'covered'>(user?.insuranceStatus || 'none');
+  const [monthlyIncome, setMonthlyIncome] = useState<number>(user?.monthlyIncome || 0);
+  const [essentials, setEssentials] = useState<number>(user?.monthlyExpenses || 0);
+  const [currentSavings, setCurrentSavings] = useState<number>(user?.savings || 0);
+  const [monthlyHealthcare, setMonthlyHealthcare] = useState<number>(0);
+  const [insuranceStatusCalc, setInsuranceStatusCalc] = useState<'none' | 'covered'>(user?.insuranceStatus || 'none');
 
-  const rec = recommendHealthFund({ monthlyIncome, monthlyEssentials, currentSavings, monthlyHealthcare, insuranceStatus });
+  const rec = recommendHealthFund({
+    monthlyIncome,
+    monthlyEssentials: essentials,
+    currentSavings,
+    monthlyHealthcare,
+    insuranceStatus: insuranceStatusCalc,
+  });
 
-  useEffect(() => {
-    if (!user) return;
-    const healthFund: HealthFund = user.healthFund || {
-      balance: 0,
-      target: rec.suggestedTarget,
-      monthlyContribution: rec.suggestedMonthly,
-      contributions: [],
-    };
-    if (!user.healthFund) {
-      onUpdateUser({ ...user, healthFund });
+  const progress = fund.target > 0 ? Math.min(100, Math.round((fund.balance / fund.target) * 100)) : 0;
+
+  const addContribution = () => {
+    if (contribAmount <= 0) {
+      addToast('Contribution amount must be > 0', 'warning');
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const healthFund = user?.healthFund || { balance: 0, target: rec.suggestedTarget, monthlyContribution: rec.suggestedMonthly, contributions: [] };
-  const progress = healthFund.target === 0 ? 0 : Math.min(100, Math.round((healthFund.balance / healthFund.target) * 100));
-
-  const addContribution = (amt: number) => {
-    if (!user || amt <= 0) return;
-    const fund: HealthFund = {
-      ...healthFund,
-      balance: Math.round(healthFund.balance + amt),
-      contributions: [
-        ...healthFund.contributions,
-        { amount: amt, date: new Date().toISOString() },
-      ],
+    const c: HealthFundContribution = {
+      id: Date.now().toString(),
+      amount: contribAmount,
+      date: new Date().toISOString(),
+      note: note.trim() || undefined,
     };
-    onUpdateUser({ ...user, healthFund: fund });
+    const newFund = {
+      ...fund,
+      balance: Math.round((fund.balance + contribAmount) * 100) / 100,
+      contributions: [c, ...fund.contributions],
+      updatedAt: new Date().toISOString(),
+    };
+    onUpdateUser({ ...user!, healthFund: newFund });
     addToast('Added to Emergency Health Fund', 'success');
+    setContribAmount(1000);
+    setNote('');
+    setBalance(newFund.balance);
   };
 
-  const saveTarget = () => {
-    if (!user) return;
-    onUpdateUser({ ...user, healthFund: { ...healthFund, target: rec.suggestedTarget, monthlyContribution: rec.suggestedMonthly } });
-    addToast('Health fund target updated', 'success');
+  const saveFund = () => {
+    const newFund = {
+      ...fund,
+      target: Math.max(0, target),
+      balance: Math.max(0, balance),
+      updatedAt: new Date().toISOString(),
+    };
+    onUpdateUser({ ...user!, healthFund: newFund });
+    addToast('Emergency Health Fund saved', 'success');
+  };
+
+  const applyRecommendation = () => {
+    setTarget(Math.round(rec.suggestedTarget));
+    addToast('Recommendation applied to target', 'success');
   };
 
   return (
-    <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <h3 className="card-title">Emergency Health Fund</h3>
-      <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>
-        Financial buffer for unexpected healthcare costs. Planning aid — not a guarantee.
-      </p>
-
-      <div className="grid-2">
-        <div className="card" style={{ gap: 12 }}>
-          <h4 style={{ margin: 0 }}>Inputs</h4>
-          <label>Monthly Income ({formatAmount(0)})</label>
-          <input type="number" value={monthlyIncome} onChange={e => setMonthlyIncome(+e.target.value)} />
-          <label>Monthly Essentials</label>
-          <input type="number" value={monthlyEssentials} onChange={e => setMonthlyEssentials(+e.target.value)} />
-          <label>Current Savings</label>
-          <input type="number" value={currentSavings} onChange={e => setCurrentSavings(+e.target.value)} />
-          <label>Monthly Healthcare Expenses (est.)</label>
-          <input type="number" value={monthlyHealthcare} onChange={e => setMonthlyHealthcare(+e.target.value)} />
-          <label>Insurance Status</label>
-          <select value={insuranceStatus} onChange={e => setInsuranceStatus(e.target.value as 'none' | 'covered')}>
-            <option value="none">Uninsured</option>
-            <option value="covered">Has Health Insurance</option>
-          </select>
-          <button className="btn-primary" onClick={saveTarget}>Use Suggested Target</button>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div className="card" style={{ padding: 16 }}>
+        <h3 style={{ margin: '0 0 12px 0' }}>Emergency Health Fund</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+            <div><strong>Progress:</strong> {progress}%</div>
+            <div>{fund.balance.toLocaleString()} / {fund.target.toLocaleString()}</div>
+          </div>
+          <div style={{ width: '100%', background: 'var(--bg-tertiary)', borderRadius: 4, height: 8, overflow: 'hidden' }}>
+            <div style={{ width: `${progress}%`, height: 8, background: 'var(--color-success)', borderRadius: 4 }} />
+          </div>
         </div>
 
-        <div className="card" style={{ gap: 12 }}>
-          <h4 style={{ margin: 0 }}>Recommendation</h4>
-          <div>Suggested Target: <strong>{formatAmount(rec.suggestedTarget)}</strong></div>
-          <div>Suggested Monthly: <strong>{formatAmount(rec.suggestedMonthly)}</strong></div>
-          <div>Est. Months to Target: <strong>{rec.monthsToTarget}</strong></div>
-          <div>Protection: <strong>{rec.protectionStatus}</strong></div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginTop: 16 }}>
+          <div>
+            <label style={{ display: 'block', marginBottom: 4, fontSize: 14 }}>Target (₦)</label>
+            <input type="number" value={target} onChange={(e) => setTarget(Number(e.target.value))} min={0} step={500} style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }} />
+          </div>
+          <div>
+            <label style={{ display: 'block', marginBottom: 4, fontSize: 14 }}>Current Balance (₦)</label>
+            <input type="number" value={balance} onChange={(e) => setBalance(Number(e.target.value))} min={0} step={500} style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }} />
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+          <button className="btn-primary" onClick={saveFund}>Save Fund</button>
+          <button className="btn-secondary" onClick={() => setShowCalc(!showCalc)}>{showCalc ? 'Hide Calculator' : 'Show Calculator'}</button>
+        </div>
+      </div>
 
-          <div style={{ marginTop: 8 }}>
-            <div style={{ background: 'var(--bg-tertiary)', height: 8, borderRadius: 4 }}>
-              <div style={{ width: `${progress}%`, height: 8, background: 'var(--color-success)', borderRadius: 4 }} />
+      {showCalc && (
+        <div className="card" style={{ padding: 16 }}>
+          <h3 style={{ margin: '0 0 12px 0' }}>Health Emergency Fund Calculator</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: 4, fontSize: 14 }}>Monthly Income (₦)</label>
+              <input type="number" value={monthlyIncome} onChange={(e) => setMonthlyIncome(Number(e.target.value))} min={0} step={500} style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }} />
             </div>
-            <small>{progress}% of target ({formatAmount(healthFund.balance)} / {formatAmount(healthFund.target)})</small>
+            <div>
+              <label style={{ display: 'block', marginBottom: 4, fontSize: 14 }}>Monthly Essentials (₦)</label>
+              <input type="number" value={essentials} onChange={(e) => setEssentials(Number(e.target.value))} min={0} step={500} style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }} />
+            </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: 4, fontSize: 14 }}>Current Savings (₦)</label>
+              <input type="number" value={currentSavings} onChange={(e) => setCurrentSavings(Number(e.target.value))} min={0} step={500} style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }} />
+            </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: 4, fontSize: 14 }}>Monthly Healthcare (₦)</label>
+              <input type="number" value={monthlyHealthcare} onChange={(e) => setMonthlyHealthcare(Number(e.target.value))} min={0} step={500} style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }} />
+            </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: 4, fontSize: 14 }}>Insurance Status</label>
+              <select value={insuranceStatusCalc} onChange={(e) => setInsuranceStatusCalc(e.target.value as any)} style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>
+                <option value="none">Uninsured</option>
+                <option value="covered">Covered (HMO)</option>
+              </select>
+            </div>
           </div>
-
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {[1000, 2000, 5000, 10000].map(a => (
-              <button key={a} className="btn-secondary" onClick={() => addContribution(a)}>{formatAmount(a)}</button>
-            ))}
+          <div style={{ marginTop: 16, padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 8 }}>
+              <div><strong>Suggested Target:</strong> ₦{Math.round(rec.suggestedTarget).toLocaleString()}</div>
+              <div><strong>Suggested Monthly:</strong> ₦{Math.round(rec.suggestedMonthly).toLocaleString()}</div>
+              <div><strong>Months to Target:</strong> {rec.monthsToTarget}</div>
+              <div><strong>Protection Status:</strong> {rec.protectionStatus}</div>
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+              <button className="btn-primary" onClick={applyRecommendation}>Apply Recommendation</button>
+            </div>
           </div>
-          <small style={{ color: 'var(--text-muted)' }}>
-            Contributions are tracked locally in your profile.
-          </small>
+          <p style={{ fontSize: 12, opacity: 0.8, marginTop: 8 }}>Recommendation is a planning aid only, not a guarantee.</p>
         </div>
+      )}
+
+      <div className="card" style={{ padding: 16 }}>
+        <h3 style={{ margin: '0 0 12px 0' }}>Add Contribution</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
+          <div>
+            <label style={{ display: 'block', marginBottom: 4, fontSize: 14 }}>Amount (₦)</label>
+            <input type="number" value={contribAmount} onChange={(e) => setContribAmount(Number(e.target.value))} min={0} step={500} style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }} />
+          </div>
+          <div>
+            <label style={{ display: 'block', marginBottom: 4, fontSize: 14 }}>Note (optional)</label>
+            <input type="text" value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Salary deposit" style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }} />
+          </div>
+        </div>
+        <div style={{ marginTop: 12 }}>
+          <button className="btn-primary" onClick={addContribution}>Add Contribution</button>
+        </div>
+
+        {fund.contributions.length > 0 && (
+          <div style={{ marginTop: 16 }}>
+            <h4 style={{ margin: '0 0 8px 0', fontSize: 14 }}>Contribution History</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {fund.contributions.map((c) => (
+                <div key={c.id} className="card" style={{ padding: 10, background: 'var(--bg-secondary)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
+                    <div><strong>₦{c.amount.toLocaleString()}</strong> {c.note && <span style={{ opacity: 0.8 }}> — {c.note}</span>}</div>
+                    <div style={{ fontSize: 12, opacity: 0.8 }}>{new Date(c.date).toLocaleString()}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
