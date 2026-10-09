@@ -5,6 +5,7 @@ import Calculators from './components/Calculators';
 import AiAssistant from './components/AiAssistant';
 import Community from './components/Community';
 import ProfileSettings from './components/ProfileSettings';
+import HealthProtection from './components/HealthProtection';
 import AuthModal from './components/AuthModal';
 import { ToastProvider } from './components/ToastContext';
 import { CurrencyProvider, useCurrency } from './components/CurrencyContext';
@@ -68,7 +69,7 @@ function AppContent() {
     if (token) {
       api.getMe()
         .then(userData => {
-          setUser(userData);
+          setUser(userData); (window as any).finUser = userData;
         })
         .catch(() => {
           // Token expired or network error, fall back to local
@@ -105,7 +106,7 @@ function AppContent() {
   };
 
   const handleUpdateUser = async (updatedUser: User) => {
-    setUser(updatedUser);
+    setUser(updatedUser); (window as any).finUser = updatedUser;
     localStorage.setItem('fin_current_user', JSON.stringify(updatedUser));
     const users = JSON.parse(localStorage.getItem('fin_users') || '[]');
     const idx = users.findIndex((u: User) => u.email === updatedUser.email);
@@ -164,6 +165,7 @@ function AppContent() {
       case 'calculators': return 'Financial Calculators';
       case 'assistant': return 'AI Financial Coach';
       case 'community': return 'Q&A Community Forum';
+      case 'health': return 'Health & Protection';
       case 'settings': return 'App Settings & Parameters';
       default: return 'Finance App';
     }
@@ -301,6 +303,9 @@ function AppContent() {
           )}
           {currentPage === 'community' && (
             <Community user={user} onAuthRequest={() => { setAuthModalTab('login'); setAuthModalOpen(true); }} />
+          )}
+          {currentPage === 'health' && (
+            <HealthProtection user={user} onUpdateUser={handleUpdateUser} />
           )}
           {currentPage === 'settings' && (
             <ProfileSettings user={user} onUpdateUser={handleUpdateUser} onLogout={handleLogout} onConfetti={fireConfetti} />

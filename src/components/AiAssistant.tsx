@@ -119,6 +119,9 @@ export default function AiAssistant({ chatPrompt, clearChatPrompt }: AiAssistant
   const [isLoading, setIsLoading] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const userCtx = (typeof window !== 'undefined') ? (window as any).finUser || null : null;
+  const healthContext = '';
+
 
   useEffect(() => {
     if (!localStorage.getItem('fin_groq_key')) {

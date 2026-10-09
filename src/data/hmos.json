@@ -1,0 +1,85 @@
+[
+  {
+    "id": "hygeia",
+    "name": "Hygeia HMO Limited",
+    "hmoId": "1",
+    "website": "https://www.hygeiahmo.com/",
+    "phone": "07001239821",
+    "location": "Lagos",
+    "coverageTypes": [
+      "private",
+      "corporate"
+    ],
+    "source": "NHIA",
+    "verifiedDate": "2026-09-23"
+  },
+  {
+    "id": "avon",
+    "name": "Avon Healthcare Limited",
+    "hmoId": "63",
+    "website": "https://avonhealthcare.com/",
+    "phone": "07002779800",
+    "location": "Lagos",
+    "coverageTypes": [
+      "private",
+      "family"
+    ],
+    "source": "NHIA",
+    "verifiedDate": "2026-09-23"
+  },
+  {
+    "id": "axa-mansard",
+    "name": "AXA Mansard Health Limited",
+    "hmoId": "59",
+    "website": "https://www.axamansard.com/health",
+    "phone": "0700AXAMANSARD",
+    "location": "Lagos",
+    "coverageTypes": [
+      "private",
+      "corporate"
+    ],
+    "source": "NHIA",
+    "verifiedDate": "2026-09-23"
+  },
+  {
+    "id": "clearline",
+    "name": "Clearline International Limited",
+    "hmoId": "3",
+    "website": "https://www.clearlinehmo.net/",
+    "phone": "08076490111",
+    "location": "Lagos",
+    "coverageTypes": [
+      "private"
+    ],
+    "source": "NHIA",
+    "verifiedDate": "2026-09-23"
+  },
+  {
+    "id": "healthcare-international",
+    "name": "Healthcare International Limited",
+    "hmoId": "4",
+    "website": "https://www.healthcare-ng.com/",
+    "phone": "08052099069",
+    "location": "Lagos",
+    "coverageTypes": [
+      "private",
+      "corporate"
+    ],
+    "source": "NHIA",
+    "verifiedDate": "2026-09-23"
+  },
+  {
+    "id": "aiico-multishield",
+    "name": "AIICO Multishield Nigeria Limited",
+    "hmoId": "6",
+    "website": "https://www.aiicomultishield.com/",
+    "phone": "07026744353",
+    "location": "Lagos",
+    "coverageTypes": [
+      "private",
+      "corporate"
+    ],
+    "source": "NHIA",
+    "verifiedDate": "2026-09-23"
+  }
+]

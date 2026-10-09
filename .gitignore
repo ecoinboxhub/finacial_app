@@ -38,3 +38,6 @@ server/__pycache__/
 .env
 .env.local
 .env.*.local
+
+# Health plan (internal reference)
+health_financial_protection_development_plan.pdf.pdf

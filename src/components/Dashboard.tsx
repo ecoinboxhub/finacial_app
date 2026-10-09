@@ -54,6 +54,9 @@ export default function Dashboard({ user, onUpdateUser, onConfetti, totalModules
   ];
 
   const netWorth = balance + savings + investments - debts;
+  const insuranceStatus = user?.insuranceStatus || 'none';
+  const hf = user?.healthFund;
+  const hfProgress = hf && hf.target > 0 ? Math.min(100, Math.round((hf.balance / hf.target) * 100)) : 0;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -188,6 +191,19 @@ export default function Dashboard({ user, onUpdateUser, onConfetti, totalModules
         </div>
       </div>
 
+            <div className="card stagger-item" style={{ animationDelay: '0.28s' }}>
+        <h3 className="card-title">??? Health & Protection</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div><strong>Insurance:</strong> {insuranceStatus === 'covered' ? 'Covered' : 'Not covered'}</div>
+          <div><strong>Health Fund:</strong> {formatAmount(hf?.balance || 0)} / {formatAmount(hf?.target || 0)}</div>
+          <div style={{ background: 'var(--bg-tertiary)', height: 6, borderRadius: 3 }}>
+            <div style={{ width: `${hfProgress}%`, height: 6, background: 'var(--color-success)', borderRadius: 3 }} />
+          </div>
+          <small style={{ color: 'var(--text-muted)' }}>
+            Insurance + emergency fund = stronger financial protection against healthcare costs.
+          </small>
+        </div>
+      </div>
       <div className="card stagger-item" style={{ animationDelay: '0.3s' }}>
         <h3 className="card-title">🔮 Future Wealth Projection (8% Compounding Growth)</h3>
         <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '20px' }}>
