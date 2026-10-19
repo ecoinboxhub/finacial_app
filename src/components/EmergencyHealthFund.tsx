@@ -9,7 +9,7 @@ interface Props {
 }
 
 export default function EmergencyHealthFund({ user, onUpdateUser }: Props) {
-  const { addToast } = (require("./ToastContext") as any).useToast ? (require("./ToastContext") as any).useToast() : (require("./ToastContext") as any).useToast();
+  const addToast = useToast();
   const fund = user?.healthFund || {
     id: 'hf-default',
     name: 'Emergency Health Fund',

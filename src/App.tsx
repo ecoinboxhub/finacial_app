@@ -225,6 +225,11 @@ function AppContent() {
               <span className="menu-item-icon">🧮</span> Calculators
             </button>
           </li>
+          <li className={`menu-item ${currentPage === 'health' ? 'active' : ''}`}>
+            <button onClick={() => handlePageChange('health')} className="btn-press">
+              <span className="menu-item-icon">🛡️</span> Health & Protection
+            </button>
+          </li>
           <li className={`menu-item ${currentPage === 'assistant' ? 'active' : ''}`}>
             <button onClick={() => handlePageChange('assistant')} className="btn-press">
               <span className="menu-item-icon">🤖</span> AI Assistant
@@ -292,7 +297,7 @@ function AppContent() {
 
         <div className="content-body page-enter" key={currentPage}>
           {currentPage === 'dashboard' && (
-            <Dashboard user={user} onUpdateUser={handleUpdateUser} onConfetti={fireConfetti} />
+            <Dashboard user={user} onUpdateUser={handleUpdateUser} onConfetti={fireConfetti} onNavigate={handlePageChange} />
           )}
           {currentPage === 'learning' && (
             <LearningHub user={user} onUpdateUser={handleUpdateUser} onAskAi={handleAskAi} onConfetti={fireConfetti} />
@@ -305,7 +310,7 @@ function AppContent() {
             <Community user={user} onAuthRequest={() => { setAuthModalTab('login'); setAuthModalOpen(true); }} />
           )}
           {currentPage === 'health' && (
-            <HealthProtection user={user} onUpdateUser={handleUpdateUser} />
+            <HealthProtection user={user} onUpdateUser={handleUpdateUser} onAskAi={handleAskAi} />
           )}
           {currentPage === 'settings' && (
             <ProfileSettings user={user} onUpdateUser={handleUpdateUser} onLogout={handleLogout} onConfetti={fireConfetti} />
@@ -325,6 +330,10 @@ function AppContent() {
         <button className={`mobile-nav-btn ${currentPage === 'calculators' ? 'active' : ''} btn-press`} onClick={() => handlePageChange('calculators')}>
           <span className="mobile-nav-icon">🧮</span>
           <span>Calculators</span>
+        </button>
+        <button className={`mobile-nav-btn ${currentPage === 'health' ? 'active' : ''} btn-press`} onClick={() => handlePageChange('health')}>
+          <span className="mobile-nav-icon">🛡️</span>
+          <span>Health</span>
         </button>
         <button className={`mobile-nav-btn ${currentPage === 'assistant' ? 'active' : ''} btn-press`} onClick={() => handlePageChange('assistant')}>
           <span className="mobile-nav-icon">🤖</span>

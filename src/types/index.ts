@@ -15,6 +15,41 @@ export interface User {
   budgetInvestments: number;
   completedModules: string[];
   createdAt: string;
+  insuranceStatus?: 'none' | 'covered';
+  hmoId?: string;
+  healthFund?: HealthFund;
+  monthlyExpenses?: number;
+  healthEducationCompleted?: string[];
+}
+
+export interface HMO {
+  id: string;
+  name: string;
+  hmoId?: string;
+  nhiaId?: string;
+  website?: string;
+  phone?: string;
+  location?: string;
+  coverageTypes?: string[];
+  source?: string;
+  verifiedDate?: string;
+}
+
+export interface HealthFundContribution {
+  id: string;
+  amount: number;
+  date: string;
+  note?: string;
+}
+
+export interface HealthFund {
+  id: string;
+  name: string;
+  target: number;
+  balance: number;
+  contributions: HealthFundContribution[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ForumPost {

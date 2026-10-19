@@ -7,10 +7,11 @@ interface DashboardProps {
   user: User | null;
   onUpdateUser: (user: User) => void;
   onConfetti: () => void;
+  onNavigate?: (page: string) => void;
   totalModules?: number;
 }
 
-export default function Dashboard({ user, onUpdateUser, onConfetti, totalModules = 19 }: DashboardProps) {
+export default function Dashboard({ user, onUpdateUser, onConfetti, onNavigate, totalModules = 19 }: DashboardProps) {
   const addToast = useToast();
   const { formatAmount } = useCurrency();
 
@@ -192,7 +193,7 @@ export default function Dashboard({ user, onUpdateUser, onConfetti, totalModules
       </div>
 
             <div className="card stagger-item" style={{ animationDelay: '0.28s' }}>
-        <h3 className="card-title">??? Health & Protection</h3>
+        <h3 className="card-title">🛡️ Health & Protection</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div><strong>Insurance:</strong> {insuranceStatus === 'covered' ? 'Covered' : 'Not covered'}</div>
           <div><strong>Health Fund:</strong> {formatAmount(hf?.balance || 0)} / {formatAmount(hf?.target || 0)}</div>
@@ -202,6 +203,11 @@ export default function Dashboard({ user, onUpdateUser, onConfetti, totalModules
           <small style={{ color: 'var(--text-muted)' }}>
             Insurance + emergency fund = stronger financial protection against healthcare costs.
           </small>
+          {onNavigate && (
+            <button className="btn-primary" style={{ marginTop: 4, alignSelf: 'flex-start' }} onClick={() => onNavigate('health')}>
+              Open Health & Protection
+            </button>
+          )}
         </div>
       </div>
       <div className="card stagger-item" style={{ animationDelay: '0.3s' }}>
